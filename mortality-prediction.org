@@ -1,0 +1,5402 @@
+
+* Capstone Project
+** read in all the data based on diagnosis
+ read in the data, this is based on patientunitstayid and merged together. one patient can have more than one patientunitstayid
+ #+BEGIN_SRC ipython
+   import pandas as pd
+
+   heart_total = pd.read_csv('/Users/liw17/Documents/EHR/heart_total.csv')
+   strok_total = pd.read_csv('/Users/liw17/Documents/EHR/stroke_total.csv')
+   myocardial_total = pd.read_csv('/Users/liw17/Documents/EHR/myocardial_infarction_total.csv')
+  
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[1]:
+
+** intakeOutput clean up for all patients
+ #+BEGIN_SRC ipython
+ import pandas as pd 
+ intakeoutput = pd.read_csv('/Users/liw17/Documents/EHR/intakeOutput.csv')
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[5]:
+ #+BEGIN_SRC ipython
+ intakeoutputclean = intakeoutput[['patientunitstayid', 'nettotal']]
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[6]:
+
+ #+BEGIN_SRC ipython
+
+ intakeoutputclean.to_csv('/Users/liw17/Documents/EHR/intakeOutputclean.csv')
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[7]:
+#+BEGIN_SRC ipython
+
+intakeoutputclean = pd.read_csv('/Users/liw17/Documents/EHR/intakeOutputclean.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[45]:
+
+** physicalexam table clean up for all patients
+ #+BEGIN_SRC ipython
+
+ physicalexam = pd.read_csv('/Users/liw17/Documents/EHR/physicalExam.csv')
+
+ physicalexam.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[8]:
+ #+BEGIN_SRC ipython
+ keyword = "BP|HR|Resp|O2"
+ heart_rate_blood_pressure_resp = physicalexam[physicalexam['physicalexamvalue'].str.contains(keyword)]
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[12]:
+
+
+ #+BEGIN_SRC ipython
+ heart_rate_blood_pressure_resp =  heart_rate_blood_pressure_resp[['patientunitstayid', 'physicalexamvalue', 'physicalexamtext']]
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[13]:
+ #+BEGIN_SRC ipython
+ heart_rate_blood_pressure_resp['physicalexamtext'] =pd.to_numeric(heart_rate_blood_pressure_resp['physicalexamtext'])
+ 
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[18]:
+
+ #+BEGIN_SRC ipython
+ import numpy as np
+
+ heart_rate_blood_pressure_resp = heart_rate_blood_pressure_resp.pivot_table(values='physicalexamtext', index=['patientunitstayid'], columns=['physicalexamvalue'], aggfunc=np.mean)
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[20]:
+ #+BEGIN_SRC ipython
+ heart_rate_blood_pressure_resp.to_csv('/Users/liw17/Documents/EHR/physicalexamclean.csv')
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[22]:
+ #+BEGIN_SRC ipython
+ heart_rate_blood_pressure_resp = pd.read_csv('/Users/liw17/Documents/EHR/physicalexamclean.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[23]:
+
+** nurseassessment
+
+ #+BEGIN_SRC ipython
+
+ nurseassessment = pd.read_csv('/Users/liw17/Documents/EHR/nurseAssessment.csv')
+ nurseassessment.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[11]:
+#+BEGIN_SRC ipython
+
+import gc
+del nurseassessment
+gc.collect()
+
+#+END_SRC
+** extract the patient with the real heart failure _congestive heart failure_ from heart total 
+ #+BEGIN_SRC ipython
+
+ heart_total = pd.read_csv('/Users/liw17/Documents/EHR/heart_total.csv')
+ heart_total_congestive_heart_failure = heart_total[heart_total['diagnosisstring'].str.contains("congestive heart failure")]
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[40]:
+ #+BEGIN_SRC ipython
+patientid_congestive_heart_failure = heart_total_congestive_heart_failure['patientunitstayid'].unique()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[41]:
+ #+BEGIN_SRC ipython
+ heart_total_congestive_heart_failure['diagnosisstring'].hist()
+
+ #+END_SRC
+ 
+** find the unique patientunitstayid
+ #+BEGIN_SRC ipython
+ heart_total_patientunitid = heart_total['patientunitstayid'].unique()
+ stroke_total_patientunitid = strok_total['patientunitstayid'].unique()
+ myocardial_total_patientunitid = myocardial_total['patientunitstayid'].unique()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[2]:
+
+** read in all the information of tables: patients, medication, lab, treatment
+ #+BEGIN_SRC ipython
+ patients = pd.read_csv('/Users/liw17/Documents/eICUCollaborative/patient.csv')
+ medication = pd.read_csv('/Users/liw17/Documents/eICUCollaborative/medication.csv')
+ lab = pd.read_csv('/Users/liw17/Documents/eICUCollaborative/lab.csv')
+ treatment = pd.read_csv('/Users/liw17/Documents/eICUCollaborative/treatment.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[13]:
+
+** gather information for heart failure patients
+ #+BEGIN_SRC ipython
+ #print(heart_total_patientunitid)
+ treatment_heart_total = treatment[treatment['patientunitstayid'].isin(heart_total_patientunitid)]
+ medication_heart_total = medication[medication['patientunitstayid'].isin(heart_total_patientunitid)]
+ lab_heart_total = lab[lab['patientunitstayid'].isin(heart_total_patientunitid)]
+ patient_heart_total = patients[patients['patientunitstayid'].isin(heart_total_patientunitid)]
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[14]:
+
+ #+BEGIN_SRC ipython
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[15]:
+
+ #+BEGIN_SRC ipython
+ treatment_heart_total.to_csv('/Users/liw17/Documents/EHR/treatment_heart_total.csv')
+ medication_heart_total.to_csv('/Users/liw17/Documents/EHR/medication_heart_total.csv')
+ lab_heart_total.to_csv('/Users/liw17/Documents/EHR/lab_heart_total.csv')
+ patient_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_heart_total.csv')
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[16]:
+
+ #+BEGIN_SRC ipython
+
+ #treatment_heart_total = pd.read_csv('/Users/liw17/Documents/EHR/treatment_heart_total.csv')
+ #medication_heart_total = pd.read_csv('/Users/liw17/Documents/EHR/medication_heart_total.csv')
+ #lab_heart_total = pd.read_csv('/Users/liw17/Documents/EHR/lab_heart_total.csv')
+ patient_heart_total = pd.read_csv('/Users/liw17/Documents/EHR/patient_heart_total.csv')
+ #patient_myocardial_total = pd.read_csv('/Users/liw17/Documents/EHR/patient_myocardial_total.csv')
+ patient_stroke_total = pd.read_csv('/Users/liw17/Documents/EHR/patient_stroke_total.csv')
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[6]:
+
+** gather information for myocardial infarction patient 
+ #+BEGIN_SRC ipython
+
+ treatment_myocardial_total = treatment[treatment['patientunitstayid'].isin(myocardial_total_patientunitid)]
+ medication_myocardial_total = medication[medication['patientunitstayid'].isin(myocardial_total_patientunitid)]
+ lab_myocardial_total = lab[lab['patientunitstayid'].isin(myocardial_total_patientunitid)]
+ patient_myocardial_total = patients[patients['patientunitstayid'].isin(myocardial_total_patientunitid)]
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[17]:
+
+ #+BEGIN_SRC ipython
+
+ treatment_myocardial_total.to_csv('/Users/liw17/Documents/EHR/treatment_myocardial_total.csv')
+ medication_myocardial_total.to_csv('/Users/liw17/Documents/EHR/medication_myocardial_total.csv')
+ lab_myocardial_total.to_csv('/Users/liw17/Documents/EHR/lab_myocardial_total.csv')
+ patient_myocardial_total.to_csv('/Users/liw17/Documents/EHR/patient_myocardial_total.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[18]:
+
+** gather information for stroke
+ #+BEGIN_SRC ipython
+
+ treatment_stroke_total.to_csv('/Users/liw17/Documents/EHR/treatment_stroke_total.csv')
+ medication_stroke_total.to_csv('/Users/liw17/Documents/EHR/medication_stroke_total.csv')
+ lab_stroke_total.to_csv('/Users/liw17/Documents/EHR/lab_stroke_total.csv')
+ patient_stroke_total.to_csv('/Users/liw17/Documents/EHR/patient_stroke_total.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[20]:
+
+ #+BEGIN_SRC ipython
+ print(len(treatment_heart_total['patientunitstayid'].unique()))
+ print(len(heart_total['patientunitstayid'].unique()))
+ print(len(lab_heart_total['patientunitstayid'].unique()))
+ print(len(medication_heart_total['patientunitstayid'].unique()))
+ print(len(patient_heart_total['patientunitstayid'].unique()))
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[10]:
+
+ #+BEGIN_SRC ipython
+
+ treatment_stroke_total = treatment[treatment['patientunitstayid'].isin(stroke_total_patientunitid)]
+ medication_stroke_total = medication[medication['patientunitstayid'].isin(stroke_total_patientunitid)]
+ lab_stroke_total = lab[lab['patientunitstayid'].isin(stroke_total_patientunitid)]
+ patient_stroke_total = patients[patients['patientunitstayid'].isin(stroke_total_patientunitid)]
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[19]:
+
+ The tables to be included: infusionDrug, intakeOutput, nurseCharting (maybe), 
+ to double check: lab has 158 unique labName
+ very helpful: apacheApsVar, apachePredVar, apachePatientResult
+
+ #+BEGIN_SRC ipython
+
+ print(len(patient_heart_total['uniquepid'].unique()))
+ print(len(patient_stroke_total['uniquepid'].unique()))
+ print(len(patient_myocardial_total['uniquepid'].unique()))
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[12]:
+ 
+** further clean up for the heart total, stroke and myocardial infarction based on uniquepid
+ #+BEGIN_SRC ipython
+
+ uniquepatientid_heart_total = patient_heart_total['uniquepid'].unique()
+ uniquepatientid_stroke_total = patient_stroke_total['uniquepid'].unique()
+ uniquepatientid_myocardial_total = patient_myocardial_total['uniquepid'].unique()
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ len(sort_uniquepatientid_heart_total)
+
+ #+END_SRC
+ #+RESULTS:
+ : # Out[114]:
+ : : 11442
+ I must be very careful. the followed block is not right. I commented them 
+ #+BEGIN_SRC ipython
+ #uniquepatientid_heart_total_death = patients[patients['uniquepid'].isin(uniquepatientid_heart_total)]
+ #uniquepatientid_stroke_total_death = patients[patients['uniquepid'].isin(uniquepatientid_stroke_total)]
+ #uniquepatientid_myocardial_total_death = patients[patients['uniquepid'].isin(uniquepatientid_myocardial_total)]
+
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ sort_uniquepatientid_heart_total = patient_heart_total.sort_values(['uniquepid','patientunitstayid'])
+ sort_uniquepatientid_heart_total.drop_duplicates(subset = 'uniquepid', keep = 'last', inplace = True)
+ sort_uniquepatientid_heart_total.to_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_heart_total.csv')
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+
+ sort_uniquepatientid_stroke_total = patient_stroke_total.sort_values(['uniquepid','patientunitstayid'])
+ sort_uniquepatientid_stroke_total.drop_duplicates(subset = 'uniquepid', keep = 'last', inplace = True)
+ sort_uniquepatientid_stroke_total.to_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_stroke_total.csv')
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+
+ sort_uniquepatientid_myocardial_total = patient_myocardial_total.sort_values(['uniquepid','patientunitstayid'])
+ sort_uniquepatientid_myocardial_total.drop_duplicates(subset = 'uniquepid', keep = 'last', inplace = True)
+ sort_uniquepatientid_myocardial_total.to_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_myocardial_total.csv')
+
+ #+END_SRC
+#+BEGIN_SRC ipython
+sort_uniquepatientid_myocardial_total= pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_myocardial_total.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[31]:
+#+BEGIN_SRC ipython
+
+sort_uniquepatientid_heart_total = pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_heart_total.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[33]:
+
+** the lab results for heart patients. The table is reorganized. 
+ #+BEGIN_SRC ipython
+
+ lab_heart_total = lab[lab['patientunitstayid'].isin(sort_uniquepatientid_heart_total['patientunitstayid'])]
+ lab_heart_total.to_csv('/Users/liw17/Documents/EHR/lab_heart_total.csv')
+ lab_heart_total_reorganize = lab_heart_total.pivot_table(values='labresult', index=['patientunitstayid'], columns=['labname'], aggfunc=np.mean)
+ lab_heart_total_reorganize.to_csv('/Users/liw17/Documents/EHR/lab_heart_total_reorganize.csv')
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ lab_heart_total_reorganize.head()
+ len(lab_heart_total_reorganize)
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ len(sort_uniquepatientid_heart_total)
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+
+lab_heart_total_reorganize.to_csv('/Users/liw17/Documents/EHR/lab_heart_total_reorganize.csv')
+ 
+ #+END_SRC
+ #+BEGIN_SRC ipython
+
+lab_heart_total_reorganize_dropna = lab_heart_total_reorganize.loc[:, pd.notnull(lab_heart_total_reorganize).sum()>len(lab_heart_total_reorganize)*.]
+ 
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ lab_heart_total_reorganize_dropna = lab_heart_total_reorganize.loc[:, pd.notnull(lab_heart_total_reorganize).sum()>len(lab_heart_total_reorganize)*.4]
+
+ lab_heart_total_reorganize_dropna.to_csv('/Users/liw17/Documents/EHR/lab_heart_total_reorganize_dropna04.csv')
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[28]:
+#+BEGIN_SRC ipython
+
+lab_heart_total_reorganize_dropna04 = pd.read_csv('/Users/liw17/Documents/EHR/lab_heart_total_reorganize_dropna04.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[29]:
+#+BEGIN_SRC ipython
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[30]:
+#+BEGIN_SRC ipython
+
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[31]:
+#+BEGIN_SRC ipython
+
+
+
+#+END_SRC
+ #+BEGIN_SRC ipython
+ list(map("_".join, lab_heart_total_reorganize_dropna.columns))
+
+
+ #+END_SRC
+ #+RESULTS:
+ #+begin_example
+ # Out[126]:
+ ,#+BEGIN_EXAMPLE
+   ['-_e_o_s',
+   '-_l_y_m_p_h_s',
+   '-_m_o_n_o_s',
+   'B_U_N',
+   'H_c_t',
+   'H_g_b',
+   'M_C_H',
+   'M_C_H_C',
+   'M_C_V',
+   'R_B_C',
+   'R_D_W',
+   'W_B_C_ _x_ _1_0_0_0',
+   'a_l_b_u_m_i_n',
+   'b_i_c_a_r_b_o_n_a_t_e',
+   'c_a_l_c_i_u_m',
+   'c_h_l_o_r_i_d_e',
+   'c_r_e_a_t_i_n_i_n_e',
+   'g_l_u_c_o_s_e',
+   'm_a_g_n_e_s_i_u_m',
+   'p_l_a_t_e_l_e_t_s_ _x_ _1_0_0_0',
+   'p_o_t_a_s_s_i_u_m',
+   's_o_d_i_u_m']
+ ,#+END_EXAMPLE
+ #+end_example
+
+ #+BEGIN_SRC ipython
+
+ lab_heart_total_reorganize_dropna = pd.read_csv('/Users/liw17/Documents/EHR/lab_heart_total_reorganize_dropna.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[127]:
+ #+BEGIN_SRC ipython
+ lab_heart_total_reorganize_dropna.head()
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[128]:
+ ,#+BEGIN_EXAMPLE
+   patientunitstayid  -eos  -lymphs  -monos        BUN        Hct        Hgb  \
+   0             141392  2.75   12.125   9.375  18.875000  28.555556   9.055556
+   1             141594  1.75   12.500   9.000  36.166667  25.260000   8.660000
+   2             141651  2.50   41.500   8.500  27.000000  34.650000  10.750000
+   3             141822  0.00   17.500   3.500   9.750000  32.000000  11.050000
+   4             141892  0.00    7.000  10.000  26.428571  26.371429   8.814286
+  
+   MCH       MCHC        MCV     ...       albumin  bicarbonate  \
+   0  29.125000  31.750000  91.750000     ...      3.133333    32.875000
+   1  33.580000  34.260000  97.920000     ...      2.900000    28.000000
+   2  29.550000  31.050000  95.300000     ...      2.400000    27.500000
+   3  31.850000  34.550000  92.300000     ...      2.400000    33.500000
+   4  32.585714  33.428571  97.428571     ...           NaN    24.571429
+  
+   calcium    chloride  creatinine     glucose  magnesium  platelets x 1000  \
+   0  8.925000  100.000000    1.110000  117.375000     1.9000        172.625000
+   1  8.566667   97.833333    1.700000   95.666667     2.0375        157.600000
+   2  8.300000  109.000000    3.000000  136.000000        NaN        201.500000
+   3  7.900000   97.500000    0.935000  155.500000     1.7000        273.500000
+   4  8.642857  105.142857    1.525714  111.571429     2.6000        143.857143
+  
+   potassium      sodium
+   0   3.635714  138.125000
+   1   3.623077  133.333333
+   2   3.900000  144.500000
+   3   3.980000  136.250000
+   4   4.108333  136.571429
+  
+   [5 rows x 23 columns]
+ ,#+END_EXAMPLE
+ #+end_example
+
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total = pd.merge(lab_heart_total_reorganize_dropna, sort_uniquepatientid_heart_total, on = 'patientunitstayid', how='left')
+
+ 
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[34]:
+
+** table improvement and adding more variables
+ #+BEGIN_SRC ipython
+ patient_lab_heart_total.age = patient_lab_heart_total.age.str.replace('> 89','89')
+ patient_lab_heart_total.age = pd.to_numeric(patient_lab_heart_total.age)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[35]:
+
+ #+BEGIN_SRC ipython
+ def BWI(weight, height):
+     bwi = weight /((height/100)*(height/100))
+     return bwi
+
+ patient_lab_heart_total['bwi_admission'] = BWI(patient_lab_heart_total.admissionweight, patient_lab_heart_total.admissionheight)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[36]:
+
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total['bwi_discharge'] = BWI(patient_lab_heart_total.dischargeweight, patient_lab_heart_total.admissionheight)
+
+ #+END_SRC
+ #+RESULTS:
+ : # Out[37]:
+ #+BEGIN_SRC ipython
+ def alive_or_dead(hospitaldischargestatus):
+     if hospitaldischargestatus == 'Alive':
+         return 1
+     else:
+         return 0
+	
+ patient_lab_heart_total['outcome'] = patient_lab_heart_total['hospitaldischargestatus'].apply(alive_or_dead)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[38]:
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_lab_heart_total_final.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[136]:
+ #+BEGIN_SRC ipython
+ patient_lab_heart_total = patient_lab_heart_total[patient_lab_heart_total['patientunitstayid'].isin(patientid_congestive_heart_failure)] 
+
+
+ #+END_SRC
+
+#+BEGIN_SRC ipython
+patient_lab_heart_total.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[43]:
+
+ #+BEGIN_SRC ipython
+ patient_lab_heart_total_final_new.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[144]:
+ #+BEGIN_SRC ipython
+ patient_lab_heart_total.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[145]:
+
+ #+BEGIN_SRC ipython
+ list(patient_lab_heart_total)
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[140]:
+ ,#+BEGIN_EXAMPLE
+   ['patientunitstayid',
+   'eos',
+   'lymphs',
+   'monos',
+   'BUN',
+   'Hct',
+   'Hgb',
+   'MCH',
+   'MCHC',
+   'MCV',
+   'RBC',
+   'RDW',
+   'WBC x 1000',
+   'albumin',
+   'bicarbonate',
+   'calcium',
+   'chloride',
+   'creatinine',
+   'glucose',
+   'magnesium',
+   'platelets x 1000',
+   'potassium',
+   'sodium',
+   'patienthealthsystemstayid',
+   'gender',
+   'age',
+   'ethnicity',
+   'hospitalid',
+   'wardid',
+   'apacheadmissiondx',
+   'admissionheight',
+   'hospitaladmittime24',
+   'hospitaladmitoffset',
+   'hospitaladmitsource',
+   'hospitaldischargeyear',
+   'hospitaldischargetime24',
+   'hospitaldischargeoffset',
+   'hospitaldischargelocation',
+   'hospitaldischargestatus',
+   'unittype',
+   'unitadmittime24',
+   'unitadmitsource',
+   'unitvisitnumber',
+   'unitstaytype',
+   'admissionweight',
+   'dischargeweight',
+   'unitdischargetime24',
+   'unitdischargeoffset',
+   'unitdischargelocation',
+   'unitdischargestatus',
+   'uniquepid',
+   'bwi_admission',
+   'bwi_discharge',
+   'outcome']
+ ,#+END_EXAMPLE
+ #+end_example
+ #+BEGIN_SRC ipython
+ patient_lab_heart_total = patient_lab_heart_total.rename(columns={'-basos':'basos', 'eos': 'eos', 'lymphs': 'lymphs', 'monos': 'monos', '-polys':'polys'})
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[44]:
+#+BEGIN_SRC ipython
+
+ patient_lab_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_lab_heart_total_11_23.csv')
+
+#+END_SRC
+#+BEGIN_SRC ipython
+
+
+
+#+END_SRC
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total = pd.merge(patient_lab_heart_total, intakeoutputclean, on = 'patientunitstayid', how='left')
+
+
+ 
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[47]:
+
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total_final_new.to_csv('/Users/liw17/Documents/EHR/patient_lab_heart_total_final_new.csv')
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_lab_heart_total.csv')
+ print('hello')
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ patient_lab_heart_total.drop(['', 'columnheading2'], axis=1, inplace=True)
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ len(uniquepatientid_heart_total_death)
+ len(uniquepatientid_heart_total)
+
+ #+END_SRC
+ #+RESULTS:
+ : # Out[37]:
+ : : 11442
+
+ #+BEGIN_SRC ipython
+ uniquepatientid_heart_total_death.to_csv('/Users/liw17/Documents/EHR/uniquepatientid_heart_total_death.csv')
+ uniquepatientid_stroke_total_death.to_csv('/Users/liw17/Documents/EHR/uniquepatientid_stroke_total_death.csv')
+ uniquepatientid_myocardial_total_death.to_csv('/Users/liw17/Documents/EHR/uniquepatientid_stroke_total_death.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[23]:
+
+ #+BEGIN_SRC ipython
+
+ uniquepatientid_heart_total_death= pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_heart_total.csv')
+ uniquepatientid_stroke_total_death = pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_stroke_total.csv')
+ uniquepatientid_myocardial_total_death = pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_myocardial_total.csv')
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[66]:
+ #+BEGIN_SRC ipython
+ uniquepatientid_heart_total_death.fillna("NaN")
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[59]:
+ ,#+BEGIN_EXAMPLE
+   Unnamed: 0  patientunitstayid  patienthealthsystemstayid  gender   age  \
+   0            3870             167518                     149297  Female    78
+   1             924             147176                     133572  Female    63
+   2            6770             186761                     164248  Female    83
+   3           11660             220261                     190309    Male    43
+   4            8583             199669                     174348    Male    57
+   5            6078             181855                     160419    Male    65
+   6           11300             217828                     188438  Female    58
+   7            6076             181849                     160413  Female    84
+   8           10014             209400                     181894  Female  > 89
+   9            6595             185560                     163289    Male    83
+   10           8713             200581                     175069    Male    77
+   11           6500             184804                     162699    Male  > 89
+   12           8442             198584                     173515  Female    34
+   13           2806             160022                     143477  Female    64
+   14          14238             236978                     203317    Male    62
+   15          12860             227582                     196015    Male    57
+   16           6672             186041                     163687  Female    51
+   17            693             145780                     132483    Male    84
+   18          14610             239577                     205361    Male    71
+   19          10620             213450                     185068    Male    48
+   20           1729             152720                     137872  Female  > 89
+   21          13831             234190                     201156    Male    75
+   22          10573             213211                     184879    Male    44
+   23           1216             149049                     135035    Male    50
+   24          14240             236992                     203330    Male    81
+   25           5878             180654                     159464    Male    81
+   26          13082             228962                     197110  Female    64
+   27           1404             150397                     136072  Female    66
+   28           4178             169430                     150754    Male    80
+   29            991             147615                     133922    Male    68
+   ...           ...                ...                        ...     ...   ...
+   11412      198699            3340104                    2731235    Male    62
+   11413      198797            3340634                    2731708  Female    56
+   11414      196672            3327245                    2719685    Male    67
+   11415      199289            3343714                    2734510    Male    80
+   11416      198455            3338553                    2729850    Male    76
+   11417      199330            3343977                    2734749    Male    75
+   11418      200362            3350450                    2740589  Female    80
+   11419      197309            3331370                    2723357  Female    81
+   11420      200655            3352092                    2742069    Male    64
+   11421      199982            3348024                    2738419  Female    77
+   11422      200299            3350031                    2740217    Male    75
+   11423      198929            3341444                    2732441  Female    87
+   11424      197197            3330681                    2722741  Female    78
+   11425      197585            3333084                    2724899  Female    85
+   11426      197772            3334252                    2725948    Male    76
+   11427      198831            3340854                    2731905    Male    72
+   11428      199053            3342211                    2733143    Male    43
+   11429      200371            3350497                    2740632    Male    75
+   11430      200693            3352323                    2742261  Female    83
+   11431      198654            3339853                    2731006    Male    88
+   11432      197829            3334586                    2726253  Female    87
+   11433      198589            3339376                    2730580    Male    82
+   11434      199197            3343128                    2733968    Male    82
+   11435      200228            3349545                    2739787  Female    63
+   11436      200666            3352125                    2742097    Male    53
+   11437      196728            3327653                    2720045    Male    61
+   11438      198500            3338793                    2730065    Male    59
+   11439      200280            3349838                    2740051    Male    65
+   11440      198442            3338478                    2729781    Male    69
+   11441      196948            3329043                    2721288    Male    67
+  
+   ethnicity  hospitalid  wardid  \
+   0      African American          73     102
+   1             Caucasian          73      92
+   2             Caucasian          73      93
+   3      African American          73     114
+   4             Caucasian          73     114
+   5             Caucasian          73      97
+   6             Caucasian          73     114
+   7             Caucasian          73      92
+   8             Caucasian          73      92
+   9             Caucasian          73      92
+   10            Caucasian          66      90
+   11            Caucasian          59      91
+   12             Hispanic          73      85
+   13            Caucasian          63      95
+   14            Caucasian          73      92
+   15             Hispanic          73      97
+   16            Caucasian          73     100
+   17            Caucasian          63      95
+   18            Caucasian          66      90
+   19     African American          73      99
+   20                  NaN          73      85
+   21            Caucasian          73     114
+   22            Caucasian          63      95
+   23     African American          73      97
+   24             Hispanic          73      97
+   25        Other/Unknown          66      90
+   26            Caucasian          58     108
+   27            Caucasian          73     114
+   28            Caucasian          73      97
+   29            Caucasian          73      99
+   ...                 ...         ...     ...
+   11412             Asian         459    1108
+   11413  African American         458    1109
+   11414         Caucasian         458    1105
+   11415         Caucasian         458    1104
+   11416     Other/Unknown         458    1104
+   11417         Caucasian         458    1104
+   11418  African American         458    1104
+   11419         Caucasian         458    1106
+   11420         Caucasian         458    1107
+   11421         Caucasian         458    1107
+   11422         Caucasian         459    1108
+   11423         Caucasian         458    1109
+   11424         Caucasian         459    1108
+   11425         Caucasian         458    1109
+   11426         Caucasian         458    1104
+   11427         Caucasian         458    1109
+   11428  African American         458    1109
+   11429  African American         458    1109
+   11430         Caucasian         458    1104
+   11431         Caucasian         459    1108
+   11432         Caucasian         458    1109
+   11433  African American         458    1109
+   11434         Caucasian         458    1104
+   11435         Caucasian         458    1109
+   11436  African American         458    1106
+   11437         Caucasian         458    1106
+   11438  African American         458    1106
+   11439  African American         458    1104
+   11440         Caucasian         458    1109
+   11441         Caucasian         458    1109
+  
+   apacheadmissiondx admissionheight  \
+   0                  Embolectomy (with general anesthesia)           167.6
+   1                            Tumor removal, intracardiac           154.9
+   2                          CHF, congestive heart failure           152.4
+   3                                          Sepsis, other           167.6
+   4                      Infarction, acute myocardial (MI)           175.3
+   5                                        Sepsis, unknown           180.3
+   6             Hypertension-pulmonary, primary/idiopathic             160
+   7                               Mitral valve replacement           154.9
+   8      Complications of previous open-heart surgery, ...           129.5
+   9                    Aortic and Mitral valve replacement           175.3
+   10                                         Herniorrhaphy             188
+   11                                     Sepsis, pulmonary             188
+   12          Arrest, respiratory (without cardiac arrest)           162.5
+   13                Rhythm disturbance (conduction defect)           162.6
+   14                   Aortic valve replacement (isolated)             188
+   15                                     Sepsis, pulmonary           167.6
+   16        Seizures (primary-no structural brain disease)           162.6
+   17          Arrest, respiratory (without cardiac arrest)           167.6
+   18                                  Renal failure, acute             177
+   19                         CHF, congestive heart failure           172.7
+   20                                     Pelvis/hip trauma             NaN
+   21                                     Sepsis, pulmonary             170
+   22                  CVA, cerebrovascular accident/stroke           172.7
+   23                           Thoracotomy for lung cancer           170.2
+   24                         CHF, congestive heart failure           162.6
+   25                                      Head only trauma           162.6
+   26                                  Pneumonia, bacterial           170.1
+   27                         CHF, congestive heart failure           149.9
+   28                                     Sepsis, pulmonary           182.9
+   29                          Respiratory - medical, other           157.5
+   ...                                                  ...             ...
+   11412               CVA, cerebrovascular accident/stroke           167.6
+   11413                      CHF, congestive heart failure           167.6
+   11414      Subarachnoid hemorrhage/intracranial aneurysm           185.4
+   11415                                 Embolus, pulmonary           172.7
+   11416                      CHF, congestive heart failure           185.4
+   11417             Rhythm disturbance (conduction defect)           172.7
+   11418  Hypovolemia (including dehydration, Do not inc...           170.2
+   11419              Sepsis, renal/UTI (including bladder)           172.7
+   11420                            Vascular surgery, other             160
+   11421        CABG alone, coronary artery bypass grafting             160
+   11422                               Emphysema/bronchitis           182.9
+   11423  Cardiac arrest (with or without respiratory ar...           167.6
+   11424                      CHF, congestive heart failure           170.1
+   11425                      CHF, congestive heart failure           157.5
+   11426                      CHF, congestive heart failure           175.2
+   11427                      CHF, congestive heart failure           175.3
+   11428                      CHF, congestive heart failure           180.3
+   11429  Cardiac arrest (with or without respiratory ar...           170.2
+   11430                      CHF, congestive heart failure           165.1
+   11431                      CHF, congestive heart failure             168
+   11432                      CHF, congestive heart failure           162.6
+   11433                       Respiratory - medical, other           177.8
+   11434  Cardiac arrest (with or without respiratory ar...           180.3
+   11435                                 Embolus, pulmonary           162.6
+   11436                      CHF, congestive heart failure             160
+   11437  Coma/change in level of consciousness (for hep...           170.2
+   11438                                    Sepsis, unknown             160
+   11439  Coma/change in level of consciousness (for hep...           175.3
+   11440                                 Shock, cardiogenic           177.8
+   11441                      CHF, congestive heart failure           172.7
+  
+   ...           unitadmitsource  unitvisitnumber unitstaytype  \
+   0        ...            Operating Room                1        admit
+   1        ...            Operating Room                1        admit
+   2        ...                     Floor                1        admit
+   3        ...      Emergency Department                1        admit
+   4        ...      Emergency Department                1        admit
+   5        ...      Emergency Department                1        admit
+   6        ...      Emergency Department                1        admit
+   7        ...            Operating Room                1        admit
+   8        ...            Operating Room                1        admit
+   9        ...            Operating Room                1        admit
+   10       ...            Operating Room                1        admit
+   11       ...      Emergency Department                1        admit
+   12       ...                     Floor                2      readmit
+   13       ...              Direct Admit                1        admit
+   14       ...            Operating Room                1        admit
+   15       ...      Emergency Department                1        admit
+   16       ...                     Floor                3      readmit
+   17       ...      Emergency Department                1        admit
+   18       ...      Emergency Department                1        admit
+   19       ...      Emergency Department                1        admit
+   20       ...            Operating Room                1        admit
+   21       ...            Other Hospital                1        admit
+   22       ...      Emergency Department                1        admit
+   23       ...            Operating Room                1        admit
+   24       ...      Emergency Department                1        admit
+   25       ...      Emergency Department                1        admit
+   26       ...                     Floor                1        admit
+   27       ...      Emergency Department                1        admit
+   28       ...            Other Hospital                1        admit
+   29       ...                     Floor                1        admit
+   ...      ...                       ...              ...          ...
+   11412    ...      Emergency Department                1        admit
+   11413    ...      Emergency Department                1        admit
+   11414    ...      Emergency Department                1        admit
+   11415    ...      Step-Down Unit (SDU)                1        admit
+   11416    ...              Direct Admit                1        admit
+   11417    ...      Emergency Department                1        admit
+   11418    ...      Step-Down Unit (SDU)                1        admit
+   11419    ...      Emergency Department                1        admit
+   11420    ...             Recovery Room                1        admit
+   11421    ...            Operating Room                1        admit
+   11422    ...      Emergency Department                1        admit
+   11423    ...      Emergency Department                1        admit
+   11424    ...      Step-Down Unit (SDU)                1        admit
+   11425    ...      Emergency Department                1        admit
+   11426    ...              Direct Admit                1        admit
+   11427    ...      Emergency Department                1        admit
+   11428    ...      Emergency Department                1        admit
+   11429    ...      Emergency Department                1        admit
+   11430    ...      Emergency Department                1        admit
+   11431    ...      Step-Down Unit (SDU)                1        admit
+   11432    ...              Direct Admit                1        admit
+   11433    ...                     Floor                3      readmit
+   11434    ...      Emergency Department                1        admit
+   11435    ...              Direct Admit                1        admit
+   11436    ...              Direct Admit                1        admit
+   11437    ...      Emergency Department                1        admit
+   11438    ...      Emergency Department                1        admit
+   11439    ...      Step-Down Unit (SDU)                1        admit
+   11440    ...      Emergency Department                1        admit
+   11441    ...              Direct Admit                1        admit
+  
+   admissionweight dischargeweight  unitdischargetime24  \
+   0                 62.6            62.2             00:39:00
+   1                 84.8            89.3             20:09:00
+   2                 91.2            66.5             00:41:00
+   3                130.4           122.6             00:58:00
+   4                  100           101.6             00:11:00
+   5                 77.1            77.8             03:32:00
+   6                161.1           144.6             15:24:00
+   7                   63            64.5             14:51:00
+   8                 44.3            40.4             20:53:00
+   9                  NaN            92.2             16:18:00
+   10               115.6             109             18:57:00
+   11                 NaN              66             21:57:00
+   12                 NaN           107.7             20:59:00
+   13                70.3            77.3             10:08:00
+   14                92.9            93.3             15:34:00
+   15                 NaN            74.8             03:53:00
+   16                 NaN            47.8             00:41:00
+   17                 NaN            72.7             19:59:00
+   18                77.6            73.5             00:41:00
+   19                 NaN              78             01:08:00
+   20                 NaN            47.8             01:28:00
+   21                 NaN           109.9             03:41:00
+   22               108.3           109.7             00:49:00
+   23               125.5           120.2             00:01:00
+   24                74.4            72.3             16:15:00
+   25                  59            56.2             00:47:00
+   26                 NaN           126.4             17:35:00
+   27                 NaN            97.7             02:20:00
+   28                  77            69.1             19:18:00
+   29                59.4            51.2             00:03:00
+   ...                ...             ...                  ...
+   11412             77.1           88.32             21:05:00
+   11413            102.9            98.8             14:29:00
+   11414             84.5            84.5             19:38:00
+   11415             93.3              87             21:13:00
+   11416            107.9            98.4             00:21:00
+   11417             86.3            86.4             19:50:00
+   11418            64.65            60.1             23:18:00
+   11419             70.9            89.5             00:20:00
+   11420             58.6            54.7             17:22:00
+   11421             75.7            71.8             17:35:00
+   11422             77.3             NaN             21:26:00
+   11423             78.9            83.3             22:00:00
+   11424             91.6            82.1             15:55:00
+   11425             76.1            70.4             00:43:00
+   11426             73.3            70.1             23:28:00
+   11427               93            84.3             18:49:00
+   11428             81.8            69.3             02:35:00
+   11429             54.4           54.43             18:30:00
+   11430             76.2            72.7             18:08:00
+   11431             65.1            60.9             19:40:00
+   11432               54            53.8             23:50:00
+   11433             55.3            56.5             00:03:00
+   11434            113.4             NaN             01:52:00
+   11435             91.6           106.4             23:52:00
+   11436             63.8            64.9             16:57:00
+   11437            118.4           102.9             19:00:00
+   11438             63.2            56.3             01:15:00
+   11439               59              61             21:06:00
+   11440             82.7            82.7             16:06:00
+   11441            155.2             141             00:08:00
+  
+   unitdischargeoffset unitdischargelocation unitdischargestatus  uniquepid
+   0                    2804                 Floor               Alive  002-10439
+   1                    5964                 Floor               Alive  002-10445
+   2                   14974  Step-Down Unit (SDU)               Alive   002-1051
+   3                    8801                 Floor               Alive  002-10686
+   4                    4116                 Floor               Alive  002-10706
+   5                    2243                 Floor               Alive  002-10724
+   6                    7709  Step-Down Unit (SDU)               Alive  002-10891
+   7                    4022                 Floor               Alive  002-10925
+   8                   10521                 Floor               Alive  002-10929
+   9                    2740                 Floor               Alive  002-10981
+   10                   3957             Telemetry               Alive   002-1127
+   11                   1279                 Floor               Alive  002-11270
+   12                   4458                 Floor               Alive  002-11414
+   13                    624  Step-Down Unit (SDU)               Alive  002-11461
+   14                  10094                 Floor               Alive  002-11748
+   15                   2133                 Floor               Alive  002-11816
+   16                   1657                 Floor               Alive  002-12088
+   17                   7469                 Floor               Alive  002-12150
+   18                   4375                  Home               Alive   002-1228
+   19                   3203                 Floor               Alive  002-12429
+   20                   2740                 Floor               Alive  002-12470
+   21                  10066                 Floor               Alive  002-12548
+   22                    872                 Floor               Alive  002-12588
+   23                   4900                 Floor               Alive  002-12593
+   24                   3478                 Floor               Alive  002-12876
+   25                   1921  Step-Down Unit (SDU)               Alive  002-13226
+   26                   4537                 Floor               Alive  002-13275
+   27                   4400                 Floor               Alive  002-13318
+   28                   6618                 Floor               Alive  002-13536
+   29                  29165  Step-Down Unit (SDU)               Alive  002-13917
+   ...                   ...                   ...                 ...        ...
+   11412               17732                 Floor               Alive   035-8282
+   11413                2139                 Other               Alive   035-8715
+   11414                1336                 Death             Expired   035-8753
+   11415                4219             Telemetry               Alive   035-8802
+   11416               16341             Telemetry               Alive   035-8879
+   11417                3843             Telemetry               Alive   035-8896
+   11418                3062             Telemetry               Alive   035-8958
+   11419                2397  Step-Down Unit (SDU)               Alive   035-8963
+   11420               19947             Telemetry               Alive   035-8975
+   11421                1379             Telemetry               Alive    035-899
+   11422                3938                 Other               Alive   035-8996
+   11423               22866                 Death             Expired   035-9006
+   11424               16066             Telemetry               Alive   035-9020
+   11425                9988             Telemetry               Alive   035-9026
+   11426               12941             Telemetry               Alive   035-9146
+   11427                2151             Telemetry               Alive   035-9194
+   11428                6449  Step-Down Unit (SDU)               Alive   035-9241
+   11429                1198             Telemetry               Alive   035-9316
+   11430                3049             Telemetry               Alive   035-9430
+   11431                1281  Step-Down Unit (SDU)               Alive   035-9486
+   11432                5311             Telemetry               Alive   035-9497
+   11433                7139             Telemetry               Alive   035-9500
+   11434                6620                 Death             Expired   035-9540
+   11435               13193                 Death             Expired   035-9589
+   11436                2740             Telemetry               Alive   035-9686
+   11437               20900  Step-Down Unit (SDU)               Alive   035-9738
+   11438               14426  Step-Down Unit (SDU)               Alive   035-9756
+   11439               13288             Telemetry               Alive   035-9833
+   11440                1670                 Death             Expired   035-9879
+   11441               16302             Telemetry               Alive   035-9926
+  
+   [11442 rows x 30 columns]
+ ,#+END_EXAMPLE
+ #+end_example
+
+
+** make the final table for heart
+
+*** read in the table of lab result of heart failure. the table includes all the columns with more 40% data fill in
+ #+BEGIN_SRC ipython
+ import pandas as pd
+ import numpy as np
+ lab_heart_total_reorganize_dropna04 = pd.read_csv('/Users/liw17/Documents/EHR/lab_heart_total_reorganize_dropna04.csv')
+
+
+ #+END_SRC
+ #+RESULTS:
+ : # Out[1]:
+
+*** read in paitent table with unique patient id
+ #+BEGIN_SRC ipython
+ sort_uniquepatientid_heart_total = pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_heart_total.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[2]:
+
+*** select only the congestive heart failure
+ #+BEGIN_SRC ipython
+
+ heart_total = pd.read_csv('/Users/liw17/Documents/EHR/heart_total.csv')
+ heart_total_congestive_heart_failure = heart_total[heart_total['diagnosisstring'].str.contains("congestive heart failure")]
+ patientid_congestive_heart_failure = heart_total_congestive_heart_failure['patientunitstayid'].unique()
+
+ patient_lab_heart_total = pd.merge(sort_uniquepatientid_heart_total, lab_heart_total_reorganize_dropna04, on = 'patientunitstayid', how='left')
+ patient_lab_heart_total = patient_lab_heart_total[patient_lab_heart_total['patientunitstayid'].isin(patientid_congestive_heart_failure)] 
+ patient_lab_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_lab_heart_final_11_23.csv')
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[6]:
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total = pd.read_csv('/Users/liw17/Documents/EHR/patient_lab_heart_final_11_23.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[4]:
+
+*** read in inputtakeout data and merge to patient_lab_heart_total
+
+**** read in the total intakeoutputclean data and select the rows for heart failure patients    
+  #+BEGIN_SRC ipython
+
+  intakeoutputclean = pd.read_csv('/Users/liw17/Documents/EHR/intakeOutputclean.csv')
+  intakeoutputclean_heart = intakeoutputclean[intakeoutputclean['patientunitstayid'].isin(patient_lab_heart_total['patientunitstayid'])]
+
+
+  #+END_SRC
+
+  #+RESULTS:
+  : # Out[13]:
+  #+BEGIN_SRC ipython
+
+  intakeoutputclean_heart.to_csv('/Users/liw17/Documents/EHR/intakeOutputclean_heart.csv')
+
+  #+END_SRC
+
+  #+RESULTS:
+  : # Out[14]:
+
+**** drop the duplicate rows
+  #+BEGIN_SRC ipython
+
+  intakeoutputclean_heart.drop_duplicates(subset = 'patientunitstayid', inplace = False)
+
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  # Out[16]:
+  ,#+BEGIN_EXAMPLE
+    Unnamed: 0  patientunitstayid  nettotal
+    29                29             162156    100.00
+    45                45             201266    646.70
+    89                89             201456   -180.00
+    104              104             207927      0.00
+    106              106             213586   1050.90
+    224              224             213517      0.00
+    233              233             195249   -300.00
+    259              259             166087   -120.00
+    308              308             225802    500.00
+    374              374             145272   -250.00
+    384              384             216712   -250.00
+    412              412             194526     50.00
+    455              455             163796    400.00
+    535              535             182530   -150.00
+    568              568             196064    120.00
+    693              693             178730   -400.00
+    716              716             237001     75.00
+    806              806             237364    285.00
+    844              844             205138    302.00
+    851              851             192290    320.00
+    874              874             212326    100.00
+    934              934             237080   -800.00
+    938              938             238632   -225.00
+    1003            1003             161176   -195.00
+    1018            1018             167745    170.00
+    1031            1031             213909   -100.00
+    1033            1033             156331   -150.00
+    1046            1046             205112   -350.00
+    1078            1078             165548     50.00
+    1133            1133             226177   -200.00
+    ...              ...                ...       ...
+    11436004    11436004            3333307   -950.00
+    11436392    11436392            3344742    100.00
+    11438118    11438118            3346093     30.00
+    11438611    11438611            3346479    220.00
+    11439582    11439582            3350796   -875.00
+    11440367    11440367            3352800   -350.00
+    11441519    11441519            3346904    150.38
+    11441947    11441947            3326781      0.00
+    11442351    11442351            3347100    250.00
+    11442793    11442793            3336715     19.20
+    11448144    11448144            3340739    -80.00
+    11450216    11450216            3344497      0.00
+    11454135    11454135            3350497    -35.00
+    11457005    11457005            3352770   -137.50
+    11457355    11457355            3332049    340.00
+    11459552    11459552            3335778    300.00
+    11460749    11460749            3339060    200.00
+    11465218    11465218            3338066   -400.00
+    11465547    11465547            3345104     10.00
+    11467305    11467305            3345171      0.00
+    11467841    11467841            3329665     60.00
+    11473721    11473721            3333904     40.00
+    11477267    11477267            3336523    100.00
+    11496032    11496032            3351622      5.00
+    11496419    11496419            3337307    -40.00
+    11508267    11508267            3352985   -200.00
+    11517690    11517690            3328951      0.00
+    11534813    11534813            3335720      0.00
+    11534946    11534946            3347113      0.00
+    11582557    11582557            3331072    120.00
+  
+    [9740 rows x 3 columns]
+  ,#+END_EXAMPLE
+  #+end_example
+  
+**** select the two columns 
+  #+BEGIN_SRC ipython
+  intakeoutputclean_heart = intakeoutputclean_heart[['patientunitstayid','nettotal']]
+
+  intakeoutputclean_heart.to_csv('/Users/liw17/Documents/EHR/intakeOutputclean_heartdropdup.csv')
+
+  #+END_SRC
+
+  #+RESULTS:
+  : # Out[18]:
+  #+BEGIN_SRC ipython
+  intakeoutputclean_heart.info()
+
+  #+END_SRC
+
+  #+RESULTS:
+  : # Out[19]:
+
+  
+**** merge the table of intakeoutput with patient heart table
+  #+BEGIN_SRC ipython
+
+  patient_lab_heart_total = pd.merge(patient_lab_heart_total, intakeoutputclean_heart, on = 'patientunitstayid', how='left')
+  patient_lab_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_heart_final_11_23.csv')
+
+  #+END_SRC
+
+  #+RESULTS:
+  : # Out[20]:
+  #+BEGIN_SRC ipython
+  patient_lab_heart_total.info()
+
+  #+END_SRC
+
+  #+RESULTS:
+  : # Out[21]:
+
+*** adding physical examination information to patient heart with lab intakeoutput
+
+ #+BEGIN_SRC ipython
+
+ heart_rate_blood_pressure_resp = pd.read_csv('/Users/liw17/Documents/EHR/physicalexamclean.csv')
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[23]:
+
+ #+BEGIN_SRC ipython
+
+
+ heart_rate_blood_pressure_resp_heart = heart_rate_blood_pressure_resp[heart_rate_blood_pressure_resp['patientunitstayid'].isin(patient_lab_heart_total['patientunitstayid'])]
+ heart_rate_blood_pressure_resp_heart.to_csv('/Users/liw17/Documents/EHR/heart_rate_blood_pressure_resp_heart.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[24]:
+ #+BEGIN_SRC ipython
+
+ heart_rate_blood_pressure_resp_heart.drop_duplicates(subset = 'patientunitstayid', inplace = False)
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[25]:
+ ,#+BEGIN_EXAMPLE
+   patientunitstayid  BP (diastolic) Current  BP (diastolic) Highest  \
+   25                 141392               65.000000               65.000000
+   36                 141594               65.000000               65.000000
+   40                 141651              101.000000              101.000000
+   52                 141822                     NaN                     NaN
+   57                 141892               56.000000               73.000000
+   78                 142141               75.000000               75.000000
+   114                142686               63.000000               71.000000
+   125                142974               77.000000               77.000000
+   127                143003               93.000000               93.000000
+   154                143400               94.000000               94.000000
+   172                143518              104.000000              104.000000
+   175                143553               63.000000               63.000000
+   185                143636               87.000000               87.000000
+   220                144039                     NaN                     NaN
+   247                144499               78.000000               78.000000
+   261                144722                     NaN                     NaN
+   268                144854                     NaN                     NaN
+   269                144944               77.000000               77.000000
+   303                145272                     NaN               73.000000
+   322                145542               43.000000               86.000000
+   332                145645               91.000000              119.000000
+   338                145780               73.000000               76.000000
+   343                145828               67.000000               67.000000
+   379                146167               93.000000               93.000000
+   396                146396               57.000000               57.000000
+   404                146516               56.000000               56.000000
+   408                146533               80.000000               80.000000
+   419                146619               55.000000               67.000000
+   438                146899               76.000000               76.000000
+   440                146912                     NaN                     NaN
+   ...                   ...                     ...                     ...
+   151156            3350497               56.000000               59.000000
+   151159            3350517               83.000000               83.000000
+   151162            3350526                     NaN                     NaN
+   151170            3350583               68.000000               73.000000
+   151186            3350668               74.000000               77.000000
+   151206            3350796               67.000000               68.000000
+   151207            3350798               68.000000               68.000000
+   151239            3350937               71.000000               74.000000
+   151245            3350981               69.000000               69.000000
+   151278            3351188               60.000000               60.000000
+   151286            3351222               56.000000               70.000000
+   151339            3351622               90.000000               90.000000
+   151340            3351628                     NaN                     NaN
+   151373            3351806               58.800000               81.800000
+   151394            3351949               45.000000               51.000000
+   151417            3352092               49.000000               58.000000
+   151428            3352125               90.000000               95.000000
+   151452            3352323               58.500000               78.500000
+   151483            3352496               86.666667               95.000000
+   151496            3352560               55.000000               58.000000
+   151514            3352737                     NaN                     NaN
+   151519            3352770               59.500000               84.500000
+   151524            3352800               80.000000               86.000000
+   151528            3352827                     NaN                     NaN
+   151546            3352964               53.000000               69.000000
+   151550            3352985               89.000000               89.000000
+   151557            3353051              112.000000              112.000000
+   151562            3353087               53.000000               63.000000
+   151569            3353117               56.210526               71.111111
+   151589            3353235               98.000000               98.000000
+  
+   BP (diastolic) Lowest  BP (systolic) Current  BP (systolic) Highest  \
+   25                  61.000000             112.000000             112.000000
+   36                  65.000000             116.000000             116.000000
+   40                 101.000000             190.000000             190.000000
+   52                        NaN                    NaN                    NaN
+   57                  54.000000             153.000000             147.000000
+   78                  82.000000             162.000000             162.000000
+   114                 63.000000             132.000000             146.000000
+   125                 77.000000             117.000000             117.000000
+   127                 93.000000             162.000000             162.000000
+   154                 94.000000             140.000000             140.000000
+   172                104.000000             169.000000             169.000000
+   175                 63.000000             117.000000             117.000000
+   185                 87.000000             120.000000             120.000000
+   220                       NaN                    NaN                    NaN
+   247                 78.000000             142.000000             142.000000
+   261                       NaN                    NaN                    NaN
+   268                       NaN                    NaN                    NaN
+   269                 77.000000             144.000000             144.000000
+   303                 38.000000                    NaN             145.000000
+   322                 44.000000             125.000000             101.000000
+   332                 91.000000             229.000000             221.000000
+   338                 57.000000             118.000000             162.000000
+   343                 67.000000             149.000000             149.000000
+   379                 93.000000             149.000000             149.000000
+   396                 43.000000              91.000000              91.000000
+   404                 56.000000             102.000000             102.000000
+   408                 80.000000             158.000000             158.000000
+   419                 55.000000              79.000000              85.000000
+   438                 76.000000             136.000000             136.000000
+   440                       NaN                    NaN                    NaN
+   ...                       ...                    ...                    ...
+   151156              55.000000             103.000000             119.000000
+   151159              86.000000             120.000000             120.000000
+   151162                    NaN                    NaN                    NaN
+   151170              68.000000             149.000000             154.000000
+   151186              74.000000             114.000000             112.000000
+   151206              67.000000             130.000000             139.000000
+   151207              64.000000             138.000000             138.000000
+   151239              71.000000             102.000000             116.000000
+   151245              61.000000              97.000000              97.000000
+   151278              60.000000             113.000000             113.000000
+   151286              56.000000             124.000000             157.000000
+   151339              69.000000             167.000000             167.000000
+   151340                    NaN                    NaN                    NaN
+   151373              46.200000             154.600000             201.800000
+   151394              45.000000              98.000000             115.000000
+   151417              44.000000             110.000000             120.500000
+   151428              88.000000             213.000000             228.000000
+   151452              55.000000             113.500000             125.000000
+   151483              68.666667             154.333333             171.333333
+   151496              55.000000             114.000000             114.000000
+   151514                    NaN                    NaN                    NaN
+   151519              52.000000             124.500000             155.500000
+   151524              63.000000             196.000000             182.000000
+   151528                    NaN                    NaN                    NaN
+   151546              51.000000             107.000000             129.000000
+   151550              80.000000             163.000000             163.000000
+   151557             112.000000             248.000000             248.000000
+   151562              45.000000              95.000000             132.000000
+   151569              48.111111             110.789474             130.944444
+   151589              98.000000             161.000000             161.000000
+  
+   BP (systolic) Lowest       FiO2%  HR Current  HR Highest  HR Lowest  \
+   25                107.000000         NaN   78.000000   78.000000       78.0
+   36                116.000000         NaN   63.000000   63.000000       63.0
+   40                190.000000         NaN         NaN         NaN        NaN
+   52                       NaN  100.000000         NaN         NaN        NaN
+   57                123.000000   45.000000   74.000000   94.000000       64.0
+   78                152.000000         NaN         NaN         NaN        NaN
+   114               132.000000         NaN   78.000000   83.000000       78.0
+   125               117.000000   30.000000         NaN         NaN        NaN
+   127               162.000000         NaN   92.000000   92.000000       92.0
+   154               140.000000         NaN         NaN         NaN        NaN
+   172               169.000000         NaN         NaN         NaN        NaN
+   175               117.000000         NaN         NaN         NaN        NaN
+   185               120.000000   30.000000         NaN         NaN        NaN
+   220                      NaN   50.000000         NaN         NaN        NaN
+   247               142.000000         NaN   68.000000   68.000000       68.0
+   261                      NaN  100.000000   98.000000   98.000000       98.0
+   268                      NaN  100.000000         NaN         NaN        NaN
+   269               144.000000         NaN         NaN         NaN        NaN
+   303                80.000000         NaN         NaN   98.000000       74.0
+   322                94.000000         NaN  120.000000  120.000000       76.0
+   332               229.000000   50.000000  109.000000  109.000000      109.0
+   338               107.000000   60.000000   69.000000   69.000000       59.0
+   343               149.000000         NaN   96.000000   96.000000       95.0
+   379               149.000000         NaN         NaN         NaN        NaN
+   396                71.000000         NaN  110.000000  110.000000      110.0
+   404               102.000000         NaN  138.000000  138.000000      128.0
+   408               158.000000   40.000000         NaN         NaN        NaN
+   419                79.000000         NaN   46.000000   70.000000       46.0
+   438               136.000000   60.000000  128.000000  128.000000      128.0
+   440                      NaN   50.000000         NaN         NaN        NaN
+   ...                      ...         ...         ...         ...        ...
+   151156            112.000000  100.000000   64.000000   73.000000       64.0
+   151159            116.000000         NaN   91.000000   92.000000       91.0
+   151162                   NaN   60.000000         NaN         NaN        NaN
+   151170            149.000000   25.000000   62.000000   67.000000       62.0
+   151186            114.000000         NaN   97.000000   97.000000       95.0
+   151206            130.000000         NaN   81.000000   82.000000       81.0
+   151207            128.000000   40.000000   77.000000   77.000000       77.0
+   151239            102.000000         NaN   76.000000   85.000000       76.0
+   151245            106.000000         NaN  108.000000  112.000000      108.0
+   151278            113.000000   60.000000   60.000000   60.000000       60.0
+   151286            124.000000  100.000000   56.000000   66.000000       45.0
+   151339            142.000000   50.000000   78.000000   79.000000       75.0
+   151340                   NaN         NaN   59.000000   59.000000       59.0
+   151373            120.200000   66.250000   75.000000   96.000000       58.0
+   151394             98.000000   40.000000   81.000000   81.000000       80.0
+   151417            103.000000  100.000000   45.000000   60.000000       41.5
+   151428            216.000000   60.000000   72.000000   78.000000       72.0
+   151452             98.000000         NaN   81.000000   83.500000       68.0
+   151483            108.000000   55.000000   79.000000   88.000000       67.0
+   151496            114.000000   35.000000  100.000000  100.000000      100.0
+   151514                   NaN  100.000000         NaN         NaN        NaN
+   151519             99.000000         NaN   56.000000   59.000000       56.0
+   151524            166.000000   40.000000  106.000000  113.000000      106.0
+   151528                   NaN   45.000000         NaN         NaN        NaN
+   151546            108.000000   40.000000   58.000000   69.000000       56.0
+   151550            165.000000         NaN   72.000000   72.000000       72.0
+   151557            248.000000         NaN   77.000000   78.000000       76.0
+   151562             82.000000  100.000000   89.000000   96.000000       86.0
+   151569             90.888889   38.235294   98.052632  113.055556       87.0
+   151589            161.000000         NaN         NaN         NaN        NaN
+  
+   O2 Sat% Current  O2 Sat% Highest  O2 Sat% Lowest  Resp Current  \
+   25           100.000000            100.0      100.000000           NaN
+   36            96.000000             96.0       96.000000           NaN
+   40                  NaN              NaN             NaN           NaN
+   52                  NaN              NaN             NaN           NaN
+   57            98.000000             97.0       95.000000     17.000000
+   78                  NaN              NaN             NaN           NaN
+   114          100.000000            100.0       99.000000     19.000000
+   125                 NaN              NaN             NaN           NaN
+   127                 NaN              NaN             NaN     22.000000
+   154                 NaN              NaN             NaN           NaN
+   172                 NaN              NaN             NaN           NaN
+   175                 NaN              NaN             NaN           NaN
+   185                 NaN              NaN             NaN           NaN
+   220                 NaN              NaN             NaN           NaN
+   247           91.000000             91.0       91.000000     21.000000
+   261          100.000000            100.0      100.000000           NaN
+   268                 NaN              NaN             NaN           NaN
+   269                 NaN              NaN             NaN           NaN
+   303                 NaN            100.0       91.000000           NaN
+   322           99.000000             99.0       91.000000     15.000000
+   332          100.000000            100.0      100.000000           NaN
+   338           97.000000             99.0       71.000000           NaN
+   343           96.000000             96.0       96.000000           NaN
+   379                 NaN              NaN             NaN           NaN
+   396           93.000000             93.0       93.000000           NaN
+   404           95.000000             95.0       91.000000     27.000000
+   408                 NaN              NaN             NaN           NaN
+   419          100.000000            100.0      100.000000     16.000000
+   438           92.000000             96.0       92.000000     31.000000
+   440                 NaN              NaN             NaN           NaN
+   ...                 ...              ...             ...           ...
+   151156       100.000000            100.0       99.000000     11.000000
+   151159        99.000000            100.0       99.000000     25.000000
+   151162              NaN              NaN             NaN           NaN
+   151170        98.000000             99.0       98.000000     25.000000
+   151186       100.000000            100.0      100.000000     37.000000
+   151206        97.000000             98.0       97.000000     25.000000
+   151207        98.000000             98.0       98.000000     43.000000
+   151239        99.000000             99.0       92.000000    119.000000
+   151245        99.000000            100.0       99.000000     28.000000
+   151278       100.000000            100.0      100.000000     20.000000
+   151286        93.000000             99.0       91.000000     20.000000
+   151339        98.000000             99.0       98.000000     25.000000
+   151340        98.000000             99.0       98.000000     27.000000
+   151373        98.800000             99.0       92.600000     10.000000
+   151394        98.000000             98.0       97.000000     20.000000
+   151417       100.000000            100.0       98.000000     20.000000
+   151428       100.000000            100.0      100.000000     25.000000
+   151452        98.000000             98.0       94.000000     21.500000
+   151483        99.666667            100.0       97.666667     21.000000
+   151496       100.000000            100.0      100.000000     23.000000
+   151514              NaN              NaN             NaN           NaN
+   151519        98.000000             99.0       98.000000     89.000000
+   151524        98.000000             98.0       89.000000     46.000000
+   151528              NaN              NaN             NaN           NaN
+   151546        97.000000            100.0       94.000000     22.000000
+   151550        99.000000             99.0       99.000000     23.000000
+   151557        98.000000             99.0       98.000000     24.000000
+   151562              NaN             93.0       74.000000     15.000000
+   151569        99.105263            100.0       92.388889     28.833333
+   151589              NaN              NaN             NaN           NaN
+  
+   Resp Highest  Resp Lowest
+   25               NaN          NaN
+   36               NaN          NaN
+   40               NaN          NaN
+   52               NaN          NaN
+   57         41.000000    13.000000
+   78               NaN          NaN
+   114        20.000000    19.000000
+   125              NaN          NaN
+   127        22.000000    22.000000
+   154              NaN          NaN
+   172              NaN          NaN
+   175              NaN          NaN
+   185              NaN          NaN
+   220              NaN          NaN
+   247        21.000000    21.000000
+   261              NaN          NaN
+   268              NaN          NaN
+   269              NaN          NaN
+   303        29.000000    16.000000
+   322        24.000000    10.000000
+   332              NaN          NaN
+   338              NaN          NaN
+   343              NaN          NaN
+   379              NaN          NaN
+   396              NaN          NaN
+   404        27.000000    20.000000
+   408              NaN          NaN
+   419        16.000000    16.000000
+   438        31.000000    31.000000
+   440              NaN          NaN
+   ...              ...          ...
+   151156     14.000000     6.000000
+   151159     25.000000    22.000000
+   151162           NaN          NaN
+   151170     25.000000    17.000000
+   151186     37.000000    27.000000
+   151206     25.000000    25.000000
+   151207     43.000000    43.000000
+   151239    127.000000   116.000000
+   151245     31.000000    28.000000
+   151278     20.000000    20.000000
+   151286     35.000000    16.000000
+   151339     33.000000    25.000000
+   151340     28.000000    27.000000
+   151373     17.400000     9.000000
+   151394     20.000000    17.000000
+   151417     25.500000    16.500000
+   151428     25.000000    16.000000
+   151452     33.000000    18.500000
+   151483     24.666667    16.000000
+   151496     23.000000    23.000000
+   151514           NaN          NaN
+   151519     89.000000    86.000000
+   151524     50.000000    44.000000
+   151528           NaN          NaN
+   151546     42.000000    22.000000
+   151550     24.000000    23.000000
+   151557     28.000000    24.000000
+   151562     28.000000    15.000000
+   151569     53.428571    23.714286
+   151589           NaN          NaN
+  
+   [9798 rows x 17 columns]
+ ,#+END_EXAMPLE
+ #+end_example
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total = pd.merge(patient_lab_heart_total, heart_rate_blood_pressure_resp_heart, on = 'patientunitstayid', how='left')
+ patient_lab_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_physicalexam_heart_final_11_23.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[26]:
+
+*** get rid of > before 89, remember all the number of 89 mean older than 89
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total.age = patient_lab_heart_total.age.str.replace('> 89','89')
+ patient_lab_heart_total.age = pd.to_numeric(patient_lab_heart_total.age)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[27]:
+
+*** create column for BMI
+ #+BEGIN_SRC ipython
+
+ def BWI(weight, height):
+     bwi = weight /((height/100)*(height/100))
+     return bwi
+
+ patient_lab_heart_total['bwi_admission'] = BWI(patient_lab_heart_total.admissionweight, patient_lab_heart_total.admissionheight)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[28]:
+ #+BEGIN_SRC ipython
+
+ patient_lab_heart_total['bwi_discharge'] = BWI(patient_lab_heart_total.dischargeweight, patient_lab_heart_total.admissionheight)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[29]:
+
+*** creat outcome column for Y in random forest and logistic regression
+ #+BEGIN_SRC ipython
+
+ def alive_or_dead(hospitaldischargestatus):
+     if hospitaldischargestatus == 'Alive':
+         return 1
+     else:
+         return 0
+
+ patient_lab_heart_total['outcome'] = patient_lab_heart_total['hospitaldischargestatus'].apply(alive_or_dead)
+
+ #+END_SRC
+
+*** change certain column names to get rid of '-' before name
+ #+BEGIN_SRC ipython
+ patient_lab_heart_total = patient_lab_heart_total.rename(columns={'-basos':'basos', '-eos': 'eos', '-lymphs': 'lymphs', '-monos': 'monos', '-polys':'polys'})
+ #+END_SRC
+
+*** save the final table
+ #+BEGIN_SRC ipython
+
+
+ patient_lab_heart_total.to_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_physicalexam_heart_outcome_final_11_23.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[32]:
+
+ 
+** make the final table for stroke
+
+*** read in the formation for stroke
+#+BEGIN_SRC ipython
+
+lab_stroke_total= pd.read_csv('/Users/liw17/Documents/EHR/lab_stroke_total.csv')
+patient_stroke_total=pd.read_csv('/Users/liw17/Documents/EHR/patient_stroke_total.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[33]:
+#+BEGIN_SRC ipython
+sort_uniquepatientid_stroke_total=pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_stroke_total.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[35]:
+
+*** reorganized lab table for stroke 
+#+BEGIN_SRC ipython
+
+lab_stroke_total = lab_stroke_total[lab_stroke_total['patientunitstayid'].isin(sort_uniquepatientid_stroke_total['patientunitstayid'])]
+#lab_stroke_total.to_csv('/Users/liw17/Documents/EHR/lab_heart_total.csv')
+lab_stroke_total_reorganize = lab_stroke_total.pivot_table(values='labresult', index=['patientunitstayid'], columns=['labname'], aggfunc=np.mean)
+lab_stroke_total_reorganize.to_csv('/Users/liw17/Documents/EHR/lab_stroke_total_reorganize.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[37]:
+
+*** drop the column with lots of NA 
+#+BEGIN_SRC ipython
+
+lab_stroke_total_reorganize_dropna04 = lab_stroke_total_reorganize.loc[:, pd.notnull(lab_stroke_total_reorganize).sum()>len(lab_stroke_total_reorganize)*.4]
+
+lab_stroke_total_reorganize_dropna04.to_csv('/Users/liw17/Documents/EHR/lab_stroke_total_reorganize_dropna04.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[38]:
+
+*** merge lab results with patients information 
+#+BEGIN_SRC ipython
+
+lab_stroke_total_reorganize_dropna04=pd.read_csv('/Users/liw17/Documents/EHR/lab_stroke_total_reorganize_dropna04.csv')
+patient_lab_stroke_total_dropna04 = pd.merge(sort_uniquepatientid_stroke_total, lab_stroke_total_reorganize_dropna04, on = 'patientunitstayid', how='left')
+patient_lab_stroke_total_dropna04.to_csv('/Users/liw17/Documents/EHR/patient_lab_stroke_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[40]:
+
+*** add intakeoutput to the patient lab stroke table
+
+**** read in intakeoutput and select the rows for stroke 
+ #+BEGIN_SRC ipython
+
+ intakeoutputclean = pd.read_csv('/Users/liw17/Documents/EHR/intakeOutputclean.csv')
+ intakeoutputclean_stroke = intakeoutputclean[intakeoutputclean['patientunitstayid'].isin(patient_lab_stroke_total_dropna04['patientunitstayid'])]
+ intakeoutputclean_stroke.to_csv('/Users/liw17/Documents/EHR/intakeOutputclean_stroke.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[41]:
+
+**** drop the duplicate rows 
+#+BEGIN_SRC ipython
+
+intakeoutputclean_stroke.drop_duplicates(subset = 'patientunitstayid', inplace = False)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[42]:
+,#+BEGIN_EXAMPLE
+  Unnamed: 0  patientunitstayid  nettotal
+  41                41             209311     20.00
+  67                67             147575    158.00
+  80                80             180550      0.00
+  162              162             223886   -357.00
+  203              203             187104    107.00
+  222              222             208723   -500.00
+  246              246             149278   -315.00
+  310              310             192116    200.00
+  346              346             164956      0.00
+  380              380             238559    -70.00
+  416              416             159250      0.00
+  455              455             163796    400.00
+  522              522             194669    500.00
+  535              535             182530   -150.00
+  548              548             197213    360.00
+  637              637             185496     90.00
+  647              647             194858    620.00
+  649              649             217349    285.17
+  671              671             181698     10.00
+  690              690             202427   1040.00
+  701              701             149541   2722.74
+  704              704             209545    120.00
+  774              774             164842   -150.00
+  843              843             206642   -100.00
+  992              992             216851   -150.00
+  1054            1054             189936    120.00
+  1083            1083             165469   1000.00
+  1192            1192             143736    360.00
+  1335            1335             191381    240.00
+  1371            1371             148954    120.00
+  ...              ...                ...       ...
+  11453152    11453152            3352331   -150.00
+  11454006    11454006            3343268    100.00
+  11454307    11454307            3327984      0.00
+  11456890    11456890            3344402      5.00
+  11457573    11457573            3342643    100.00
+  11460369    11460369            3330794    125.00
+  11460521    11460521            3351139      7.00
+  11462361    11462361            3351189   -175.00
+  11463034    11463034            3338980     75.00
+  11463350    11463350            3330264   -300.00
+  11463859    11463859            3351232     10.00
+  11464646    11464646            3332969    125.00
+  11468660    11468660            3331170    120.00
+  11470098    11470098            3349179   -345.00
+  11473034    11473034            3327001   -200.00
+  11477899    11477899            3340972   -500.00
+  11482177    11482177            3329675      0.00
+  11484289    11484289            3332238    120.00
+  11485990    11485990            3342939     25.43
+  11486977    11486977            3351248    200.00
+  11490978    11490978            3348391    200.00
+  11493013    11493013            3349728    100.00
+  11496827    11496827            3335380      5.00
+  11520376    11520376            3336714    360.00
+  11523547    11523547            3335177    360.00
+  11529298    11529298            3329341   -100.00
+  11542925    11542925            3337274     55.00
+  11630604    11630604            3342999      0.00
+  11652388    11652388            3344180      0.00
+  11956965    11956965            3349044      0.00
+  
+  [8253 rows x 3 columns]
+,#+END_EXAMPLE
+#+end_example
+
+**** select the two columns
+#+BEGIN_SRC ipython
+
+  intakeoutputclean_stroke = intakeoutputclean_heart[['patientunitstayid','nettotal']]
+
+  intakeoutputclean_stroke.to_csv('/Users/liw17/Documents/EHR/intakeOutputclean_strokedropdup.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[43]:
+
+**** merge the table of intakeoutputclean with the patient lab stroke table
+#+BEGIN_SRC ipython
+
+patient_lab_stroke_total = pd.merge(patient_lab_stroke_total_dropna04, intakeoutputclean_stroke, on = 'patientunitstayid', how='left')
+patient_lab_stroke_total.to_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_stroke_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[44]:
+
+*** add physical exam to the table patient_lab_stroke_total 
+
+**** read in physical exam and select the rows for stroke
+#+BEGIN_SRC ipython
+
+heart_rate_blood_pressure_resp_stroke = heart_rate_blood_pressure_resp[heart_rate_blood_pressure_resp['patientunitstayid'].isin(patient_lab_stroke_total_dropna04['patientunitstayid'])]
+heart_rate_blood_pressure_resp_stroke.to_csv('/Users/liw17/Documents/EHR/heart_rate_blood_pressure_resp_stroke.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[46]:
+
+**** merge the physical exam with the table patient_lab_stroke_total
+#+BEGIN_SRC ipython
+
+patient_lab_stroke_total = pd.merge(patient_lab_stroke_total, heart_rate_blood_pressure_resp_stroke, on = 'patientunitstayid', how='left')
+patient_lab_stroke_total.to_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_physicalexam_stroke_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[48]:
+
+*** get rid of > before 89, so all 89 means >89
+#+BEGIN_SRC ipython
+
+patient_lab_stroke_total.age = patient_lab_stroke_total.age.str.replace('> 89','89')
+patient_lab_stroke_total.age = pd.to_numeric(patient_lab_stroke_total.age)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[49]:
+
+*** creat column for BMI 
+#+BEGIN_SRC ipython
+
+patient_lab_stroke_total['bwi_admission'] = BWI(patient_lab_stroke_total.admissionweight, patient_lab_stroke_total.admissionheight)
+
+patient_lab_stroke_total['bwi_discharge'] = BWI(patient_lab_stroke_total.dischargeweight, patient_lab_stroke_total.admissionheight)
+#+END_SRC
+
+#+RESULTS:
+: # Out[50]:
+
+*** create outcome column for logistic regression and random forest 
+#+BEGIN_SRC ipython
+
+patient_lab_stroke_total['outcome'] = patient_lab_stroke_total['hospitaldischargestatus'].apply(alive_or_dead)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[51]:
+
+*** change the column name with - 
+#+BEGIN_SRC ipython
+
+patient_lab_stroke_total = patient_lab_stroke_total.rename(columns={'-basos':'basos', '-eos': 'eos', '-lymphs': 'lymphs', '-monos': 'monos', '-polys':'polys'})
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[52]:
+
+*** save the final table 
+#+BEGIN_SRC ipython
+
+patient_lab_stroke_total.to_csv('/Users/liw17/Documents/EHR/patient_lab_intakeoutput_physicalexam_stroke_outcome_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[53]:
+
+
+** make the final table for myocardial infarction
+
+*** read in the formation for myocardial infarction
+#+BEGIN_SRC ipython
+
+lab_myocardial_total= pd.read_csv('/Users/liw17/Documents/EHR/lab_myocardial_total.csv')
+patient_myocardial_total=pd.read_csv('/Users/liw17/Documents/EHR/patient_myocardial_total.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[54]:
+#+BEGIN_SRC ipython
+sort_uniquepatientid_myocardial_total=pd.read_csv('/Users/liw17/Documents/EHR/sort_uniquepatientid_myocardial_total.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[55]:
+
+*** reorganized lab table for stroke 
+#+BEGIN_SRC ipython
+
+lab_myocardial_total = lab_myocardial_total[lab_myocardial_total['patientunitstayid'].isin(sort_uniquepatientid_myocardial_total['patientunitstayid'])]
+#lab_stroke_total.to_csv('/Users/liw17/Documents/EHR/lab_heart_total.csv')
+lab_myocardial_total_reorganize = lab_myocardial_total.pivot_table(values='labresult', index=['patientunitstayid'], columns=['labname'], aggfunc=np.mean)
+lab_myocardial_total_reorganize.to_csv('/Users/liw17/Documents/EHR/lab_myocardial_total_reorganize.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[56]:
+
+*** drop the column with lots of NA 
+#+BEGIN_SRC ipython
+
+lab_myocardial_total_reorganize_dropna04 = lab_myocardial_total_reorganize.loc[:, pd.notnull(lab_myocardial_total_reorganize).sum()>len(lab_myocardial_total_reorganize)*.4]
+
+lab_myocardial_total_reorganize_dropna04.to_csv('/Users/liw17/Documents/EHR/lab_myocardial_total_reorganize_dropna04.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[57]:
+
+*** merge lab results with patients information 
+#+BEGIN_SRC ipython
+
+lab_myocardial_total_reorganize_dropna04=pd.read_csv('/Users/liw17/Documents/EHR/lab_myocardial_total_reorganize_dropna04.csv')
+patient_lab_myocardial_total_dropna04 = pd.merge(sort_uniquepatientid_myocardial_total, lab_myocardial_total_reorganize_dropna04, on = 'patientunitstayid', how='left')
+patient_lab_myocardial_total_dropna04.to_csv('/Users/liw17/Documents/EHR/patient_lab_myocardial_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[58]:
+
+*** add intakeoutput to the patient lab stroke table
+
+**** read in intakeoutput and select the rows for stroke 
+ #+BEGIN_SRC ipython
+
+ intakeoutputclean = pd.read_csv('/Users/liw17/Documents/EHR/intakeOutputclean.csv')
+ intakeoutputclean_myocardial = intakeoutputclean[intakeoutputclean['patientunitstayid'].isin(patient_lab_myocardial_total_dropna04['patientunitstayid'])]
+ intakeoutputclean_myocardial.to_csv('/Users/liw17/Documents/EHR/intakeOutputclean_myocardial.csv')
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[59]:
+
+**** drop the duplicate rows 
+#+BEGIN_SRC ipython
+
+intakeoutputclean_myocardial.drop_duplicates(subset = 'patientunitstayid', inplace = False)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[60]:
+,#+BEGIN_EXAMPLE
+  Unnamed: 0  patientunitstayid  nettotal
+  100              100             187412    741.00
+  110              110             193960    315.00
+  346              346             164956      0.00
+  374              374             145272   -250.00
+  470              470             218489    165.00
+  546              546             176195   -425.00
+  559              559             174617   1024.00
+  594              594             211526    260.00
+  644              644             229742   -200.00
+  650              650             190116   -650.00
+  721              721             176155    649.10
+  779              779             211097   1285.00
+  817              817             222030    287.00
+  957              957             181094    220.00
+  996              996             152865      0.00
+  1133            1133             226177   -200.00
+  1254            1254             158455    240.00
+  1320            1320             190628   -165.00
+  1332            1332             172619      0.00
+  1371            1371             148954    120.00
+  1501            1501             158609    -90.00
+  1632            1632             216802   -240.00
+  1674            1674             168620      0.00
+  1721            1721             219471    776.00
+  1770            1770             191309    300.00
+  1790            1790             143888   -400.00
+  1879            1879             239874   -600.00
+  2131            2131             188028     45.00
+  2216            2216             207217   -550.00
+  2251            2251             219594   -206.00
+  ...              ...                ...       ...
+  11466799    11466799            3327302   -300.00
+  11468030    11468030            3346311      0.00
+  11468906    11468906            3337421    245.00
+  11469326    11469326            3343336   -275.00
+  11470676    11470676            3334772    435.00
+  11476873    11476873            3336513     75.00
+  11477081    11477081            3327123    999.00
+  11477115    11477115            3338893   -350.00
+  11478762    11478762            3350602     41.67
+  11479033    11479033            3334313    190.00
+  11482502    11482502            3332604    240.00
+  11485870    11485870            3349997    240.00
+  11488851    11488851            3343814    240.00
+  11490365    11490365            3328436    360.00
+  11494390    11494390            3349497      5.00
+  11494708    11494708            3337964     -1.00
+  11504332    11504332            3341469      5.00
+  11505158    11505158            3347196    240.00
+  11508592    11508592            3342913      0.00
+  11513616    11513616            3350515      0.00
+  11517389    11517389            3340306    120.00
+  11524398    11524398            3340599    125.00
+  11528689    11528689            3347443   -350.00
+  11533937    11533937            3336220     15.52
+  11534946    11534946            3347113      0.00
+  11535003    11535003            3329101     -1.00
+  11549486    11549486            3337932   -400.00
+  11563206    11563206            3336070   -175.00
+  11601735    11601735            3345107   -400.00
+  11689151    11689151            3328952   -250.00
+  
+  [7145 rows x 3 columns]
+,#+END_EXAMPLE
+#+end_example
+
+**** select the two columns
+#+BEGIN_SRC ipython
+
+  intakeoutputclean_myocardial = intakeoutputclean_heart[['patientunitstayid','nettotal']]
+
+  intakeoutputclean_myocardial.to_csv('/Users/liw17/Documents/EHR/intakeOutputclean_myocardialdropdup.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[61]:
+
+**** merge the table of intakeoutputclean with the patient lab myocardial table
+#+BEGIN_SRC ipython
+
+patient_lab_myocardial_total = pd.merge(patient_lab_myocardial_total_dropna04, intakeoutputclean_myocardial, on = 'patientunitstayid', how='left')
+patient_lab_myocardial_total.to_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_myocardial_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[62]:
+
+*** add physical exam to the table patient_lab_myocardial_total 
+
+**** read in physical exam and select the rows for myocardial
+#+BEGIN_SRC ipython
+
+heart_rate_blood_pressure_resp_myocardial = heart_rate_blood_pressure_resp[heart_rate_blood_pressure_resp['patientunitstayid'].isin(patient_lab_myocardial_total_dropna04['patientunitstayid'])]
+heart_rate_blood_pressure_resp_myocardial.to_csv('/Users/liw17/Documents/EHR/heart_rate_blood_pressure_resp_myocardial.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[63]:
+
+**** merge the physical exam with the table patient_lab_myocardial_total
+#+BEGIN_SRC ipython
+
+patient_lab_myocardial_total = pd.merge(patient_lab_myocardial_total, heart_rate_blood_pressure_resp_myocardial, on = 'patientunitstayid', how='left')
+patient_lab_myocardial_total.to_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_physicalexam_myocardial_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[64]:
+
+*** get rid of > before 89, so all 89 means >89
+#+BEGIN_SRC ipython
+
+patient_lab_myocardial_total.age = patient_lab_myocardial_total.age.str.replace('> 89','89')
+patient_lab_myocardial_total.age = pd.to_numeric(patient_lab_myocardial_total.age)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[65]:
+
+*** creat column for BMI 
+#+BEGIN_SRC ipython
+
+patient_lab_myocardial_total['bwi_admission'] = BWI(patient_lab_myocardial_total.admissionweight, patient_lab_myocardial_total.admissionheight)
+
+patient_lab_myocardial_total['bwi_discharge'] = BWI(patient_lab_myocardial_total.dischargeweight, patient_lab_myocardial_total.admissionheight)
+#+END_SRC
+
+#+RESULTS:
+: # Out[66]:
+
+*** create outcome column for logistic regression and random forest 
+#+BEGIN_SRC ipython
+
+patient_lab_myocardial_total['outcome'] = patient_lab_myocardial_total['hospitaldischargestatus'].apply(alive_or_dead)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[67]:
+
+*** change the column name with - 
+#+BEGIN_SRC ipython
+
+patient_lab_myocardial_total = patient_lab_myocardial_total.rename(columns={'-basos':'basos', '-eos': 'eos', '-lymphs': 'lymphs', '-monos': 'monos', '-polys':'polys'})
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[68]:
+
+*** save the final table 
+#+BEGIN_SRC ipython
+
+patient_lab_myocardial_total.to_csv('/Users/liw17/Documents/EHR/patient_lab_intakeoutput_physicalexam_myocardial_outcome_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[69]:
+
+** do analysis basic
+ #+BEGIN_SRC ipython
+ import matplotlib.pyplot as plt
+ import numpy as np
+ totalcounts_heart = len(uniquepatientid_heart_total_death)
+ #uniquepatientid_heart_total_death.replace(r' ', np.nan, regex=True)
+ print(totalcounts_heart)
+ heart_alivedeath_count =  uniquepatientid_heart_total_death['hospitaldischargestatus'].value_counts().reset_index()
+ heart_alivedeath_count.columns = ['col', 'count']
+ print(heart_alivedeath_count)
+ heart_ethnicity_count =  uniquepatientid_heart_total_death['ethnicity'].value_counts().reset_index()
+ heart_ethnicity_count.columns = ['col', 'count']
+ print(heart_ethnicity_count)
+ heart_gender_count =  uniquepatientid_heart_total_death['gender'].value_counts().reset_index()
+ heart_gender_count.columns = ['col', 'count']
+ print(heart_gender_count)
+ heart_age_count =  uniquepatientid_heart_total_death['age'].value_counts().reset_index()
+ heart_age_count.columns = ['col', 'count']
+ print(heart_age_count)
+ heart_unittype_count =  uniquepatientid_heart_total_death['unittype'].value_counts().reset_index()
+ heart_unittype_count.columns = ['col', 'count']
+ print(heart_unittype_count)
+ heart_hospitalid_count =  uniquepatientid_heart_total_death['hospitalid'].value_counts().reset_index()
+ heart_hospitalid_count.columns = ['col', 'count']
+ print(heart_hospitalid_count)
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[60]:
+
+ #+BEGIN_SRC ipython
+ import matplotlib.pyplot as plt
+ heart_ethnicity_count.plot(kind='pie', y = 'count', autopct='%1.1f%%', startangle=90, shadow=False, labels=heart_ethnicity_count['col'], legend = False, fontsize = 14)
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[61]:
+ : : <matplotlib.axes._subplots.AxesSubplot at 0x10f83b2e8>
+ : [[file:./obipy-resources/40895Tys.png]]
+
+ #+BEGIN_SRC ipython
+ heart_ethnicity_count.plot.pie(y = 'count', labels=heart_ethnicity_count['col'])
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[62]:
+ : : <matplotlib.axes._subplots.AxesSubplot at 0x10556b7f0>
+ : [[file:./obipy-resources/40895g8y.png]]
+
+ #+BEGIN_SRC ipython
+ heart_age_count.hist(column = 'count')
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ print(heart_hospitalid_count)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[11]:
+
+ #+BEGIN_SRC ipython
+
+ print(len(patient_heart_total['patientunitstayid'].unique()))
+ print(len(patient_stroke_total['patientunitstayid'].unique()))
+ print(len(patient_myocardial_total['patientunitstayid'].unique()))
+
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+
+ import matplotlib.pyplot as plt
+ totalcounts_stroke = len(uniquepatientid_stroke_total_death)
+ print(totalcounts_stroke)
+ stroke_alivedeath_count =  uniquepatientid_stroke_total_death['hospitaldischargestatus'].value_counts().reset_index()
+ stroke_alivedeath_count.columns = ['col', 'count']
+ print(stroke_alivedeath_count)
+ stroke_ethnicity_count =  uniquepatientid_stroke_total_death['ethnicity'].value_counts().reset_index()
+ stroke_ethnicity_count.columns = ['col', 'count']
+ print(stroke_ethnicity_count)
+ stroke_gender_count =  uniquepatientid_stroke_total_death['gender'].value_counts().reset_index()
+ stroke_gender_count.columns = ['col', 'count']
+ print(stroke_gender_count)
+ stroke_age_count =  uniquepatientid_stroke_total_death['age'].value_counts().reset_index()
+ stroke_age_count.columns = ['col', 'count']
+ print(stroke_age_count)
+ stroke_unittype_count =  uniquepatientid_stroke_total_death['unittype'].value_counts().reset_index()
+ stroke_unittype_count.columns = ['col', 'count']
+ print(stroke_unittype_count)
+ stroke_hospitalid_count =  uniquepatientid_stroke_total_death['hospitalid'].value_counts().reset_index()
+ stroke_hospitalid_count.columns = ['col', 'count']
+ print(stroke_hospitalid_count)
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[63]:
+ #+BEGIN_SRC ipython
+
+ stroke_ethnicity_count.plot.pie(y = 'count', labels=stroke_ethnicity_count['col'])
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[64]:
+ : : <matplotlib.axes._subplots.AxesSubplot at 0x104c55828>
+ : [[file:./obipy-resources/40895SGC.png]]
+
+ #+BEGIN_SRC ipython
+
+ import matplotlib.pyplot as plt
+ totalcounts_myocardial = len(uniquepatientid_myocardial_total_death)
+ print(totalcounts_myocardial)
+ myocardial_alivedeath_count =  uniquepatientid_myocardial_total_death['hospitaldischargestatus'].value_counts().reset_index()
+ myocardial_alivedeath_count.columns = ['col', 'count']
+ print(myocardial_alivedeath_count)
+ myocardial_ethnicity_count =  uniquepatientid_myocardial_total_death['ethnicity'].value_counts().reset_index()
+ myocardial_ethnicity_count.columns = ['col', 'count']
+ print(myocardial_ethnicity_count)
+ myocardial_gender_count =  uniquepatientid_myocardial_total_death['gender'].value_counts().reset_index()
+ myocardial_gender_count.columns = ['col', 'count']
+ print(myocardial_gender_count)
+ myocardial_age_count =  uniquepatientid_myocardial_total_death['age'].value_counts().reset_index()
+ myocardial_age_count.columns = ['col', 'count']
+ print(myocardial_age_count)
+ myocardial_unittype_count =  uniquepatientid_myocardial_total_death['unittype'].value_counts().reset_index()
+ myocardial_unittype_count.columns = ['col', 'count']
+ print(myocardial_unittype_count)
+ myocardial_hospitalid_count =  uniquepatientid_myocardial_total_death['hospitalid'].value_counts().reset_index()
+ myocardial_hospitalid_count.columns = ['col', 'count']
+ print(myocardial_hospitalid_count)
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[67]:
+
+ #+BEGIN_SRC ipython
+
+ myocardial_ethnicity_count.plot.pie(y = 'count', labels=myocardial_ethnicity_count['col'])
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ barplot_myocardial = myocardial_age_count.plot(kind='bar', x = myocardial_age_count['col'], title ="Age Distribution",figsize=(15,10),legend=True, fontsize=12)
+
+
+ #barplot_myocardial.set_xlabel(myocardial_age_count['col'],fontsize=12)
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[76]:
+ : [[file:./obipy-resources/40895gDn.png]]
+
+ #+BEGIN_SRC ipython
+
+ myocardial_gender_count.plot.pie(y = 'count', labels=heart_gender_count['col'])
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ uniquepatientid_myocardial_total_death.age = uniquepatientid_myocardial_total_death.age.str.replace('> 89','89')
+ uniquepatientid_myocardial_total_death.age = pd.to_numeric(uniquepatientid_myocardial_total_death.age)
+ uniquepatientid_myocardial_total_death['age'].plot(kind = 'hist', bins = 100)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[88]:
+
+ #+BEGIN_SRC ipython
+
+ uniquepatientid_myocardial_total_death['age'].plot(kind = 'hist', bins = 100)
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[94]:
+ : : <matplotlib.axes._subplots.AxesSubplot at 0x1085d8128>
+ : [[file:./obipy-resources/408955rI.png]]
+
+ #+BEGIN_SRC ipython
+
+ uniquepatientid_heart_total_death.age = uniquepatientid_heart_total_death.age.str.replace('> 89','89')
+ uniquepatientid_heart_total_death.age = pd.to_numeric(uniquepatientid_heart_total_death.age)
+ uniquepatientid_heart_total_death['age'].plot(kind = 'hist', bins = 100)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[95]:
+ : : <matplotlib.axes._subplots.AxesSubplot at 0x1011d3898>
+ : [[file:./obipy-resources/40895G2O.png]]
+ #+BEGIN_SRC ipython
+
+ uniquepatientid_stroke_total_death.age = uniquepatientid_stroke_total_death.age.str.replace('> 89','89')
+ uniquepatientid_stroke_total_death.age = pd.to_numeric(uniquepatientid_stroke_total_death.age)
+ uniquepatientid_stroke_total_death['age'].plot(kind = 'hist', bins = 100)
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[96]:
+ : : <matplotlib.axes._subplots.AxesSubplot at 0x124631198>
+ : [[file:./obipy-resources/40895TAV.png]]
+
+ #+BEGIN_SRC ipython
+ uniquepatientid_stroke_total_death.groupby(["gender", "hospitaldischargestatus"]).size().reset_index(name="Counts")
+
+ #+END_SRC
+ #+BEGIN_SRC ipython
+ pd.crosstab(uniquepatientid_stroke_total_death.gender, uniquepatientid_stroke_total_death.hospitaldischargestatus)
+
+ #+END_SRC
+ #+RESULTS:
+ : # Out[98]:
+ : #+BEGIN_EXAMPLE
+ :   hospitaldischargestatus  Alive  Expired
+ :   gender
+ :   Female                    3582      616
+ :   Male                      3822      653
+ :   Unknown                      1        0
+ : #+END_EXAMPLE
+ #+BEGIN_SRC ipython
+
+ pd.crosstab(uniquepatientid_heart_total_death.gender, uniquepatientid_heart_total_death.hospitaldischargestatus)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[99]:
+ : #+BEGIN_EXAMPLE
+ :   hospitaldischargestatus  Alive  Expired
+ :   gender
+ :   Female                    4709      683
+ :   Male                      5249      799
+ : #+END_EXAMPLE
+ #+BEGIN_SRC ipython
+
+ pd.crosstab(uniquepatientid_myocardial_total_death.gender, uniquepatientid_myocardial_total_death.hospitaldischargestatus)
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[100]:
+ : #+BEGIN_EXAMPLE
+ :   hospitaldischargestatus  Alive  Expired
+ :   gender
+ :   Female                    2528      316
+ :   Male                      4482      402
+ : #+END_EXAMPLE
+
+ #+BEGIN_SRC ipython
+
+ pd.crosstab(uniquepatientid_myocardial_total_death.ethnicity, uniquepatientid_myocardial_total_death.hospitaldischargestatus)
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[101]:
+ ,#+BEGIN_EXAMPLE
+   hospitaldischargestatus  Alive  Expired
+   ethnicity
+   African American           623       52
+   Asian                       92       14
+   Caucasian                 5502      580
+   Hispanic                   267       29
+   Native American             20        3
+   Other/Unknown              404       35
+ ,#+END_EXAMPLE
+ #+end_example
+ #+BEGIN_SRC ipython
+
+ pd.crosstab(uniquepatientid_stroke_total_death.ethnicity, uniquepatientid_stroke_total_death.hospitaldischargestatus)
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[102]:
+ ,#+BEGIN_EXAMPLE
+   hospitaldischargestatus  Alive  Expired
+   ethnicity
+   African American           916      137
+   Asian                      145       24
+   Caucasian                 5565      956
+   Hispanic                   331       62
+   Native American             36        3
+   Other/Unknown              373       75
+ ,#+END_EXAMPLE
+ #+end_example
+ #+BEGIN_SRC ipython
+
+ pd.crosstab(uniquepatientid_heart_total_death.ethnicity, uniquepatientid_heart_total_death.hospitaldischargestatus)
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[103]:
+ ,#+BEGIN_EXAMPLE
+   hospitaldischargestatus  Alive  Expired
+   ethnicity
+   African American          1361      144
+   Asian                      137       20
+   Caucasian                 7467     1172
+   Hispanic                   481       78
+   Native American             29        3
+   Other/Unknown              381       51
+ ,#+END_EXAMPLE
+ #+end_example
+
+ #+BEGIN_SRC ipython
+ len(uniquepatientid_heart_total_death)
+ len(patient_heart_total)
+
+ #+END_SRC
+ #+RESULTS:
+ : # Out[32]:
+ : : 13636
+
+ #+BEGIN_SRC ipython
+
+
+ #+END_SRC
+
+** Data description
+#+BEGIN_SRC ipython
+import pandas_profiling
+profile_heart_failure = pandas_profiling.ProfileReport(heart_failure)
+profile_heart_failure.to_file("profile_heart_failure.html")
+#+END_SRC
+
+#+RESULTS:
+: # Out[169]:
+#+BEGIN_SRC ipython
+
+profile_stroke = pandas_profiling.ProfileReport(stroke)
+profile_stroke.to_file("profile_stroke.html")
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[170]:
+#+BEGIN_SRC ipython
+
+profile_myocardial = pandas_profiling.ProfileReport(myocardial)
+profile_myocardial.to_file("profile_myocardial.html")
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[171]:
+
+** Random Forest Analysis
+
+*** Heart Failure
+
+**** Read in table
+#+BEGIN_SRC ipython
+heart_failure = pd.read_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_physicalexam_heart_outcome_final_11_23.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[84]:
+#+BEGIN_SRC ipython
+heart_failure.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[87]:
+
+**** drop unrelated columns 
+#+BEGIN_SRC ipython
+
+heart_failure.drop(['Unnamed: 0', 'Unnamed: 0.1', 'Unnamed: 0_x', 'patientunitstayid', 'patienthealthsystemstayid', 'hospitalid', 'wardid', 'apacheadmissiondx', 'admissionheight', 'hospitaladmittime24', 'hospitaladmitoffset', 'hospitaladmitsource', 'hospitaldischargeyear', 'hospitaldischargetime24', 'hospitaldischargelocation', 'hospitaldischargestatus', 'unitadmittime24', 'unitadmitsource', 'unitvisitnumber', 'unitstaytype', 'admissionweight', 'dischargeweight', 'unitdischargetime24', 'unitdischargelocation', 'unitdischargestatus', 'uniquepid', 'Unnamed: 0_y'], axis = 1, inplace = True)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[86]:
+#+BEGIN_SRC ipython
+heart_failure.info()
+heart_failure.to_csv('/Users/liw17/Documents/EHR/heart_failure_table_foranalysis.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[72]:
+I found that the Unnamed: 0.1 can never be deleted.
+#+BEGIN_SRC ipython
+heart_failure.drop(['Unnamed: 0.1'], axis = 1, inplace = False)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[76]:
+,#+BEGIN_EXAMPLE
+  gender   age         ethnicity  hospitaldischargeoffset      unittype  \
+  0      Female  78.0  African American                    19942     Neuro ICU
+  1      Female  83.0         Caucasian                    17493  Med-Surg ICU
+  2        Male  57.0         Caucasian                     5327     CCU-CTICU
+  3        Male  65.0         Caucasian                     6232          MICU
+  4      Female  58.0         Caucasian                     8373     CCU-CTICU
+  5      Female  84.0         Caucasian                     7054         CTICU
+  6      Female  89.0         Caucasian                    17466         CTICU
+  7        Male  77.0         Caucasian                    18475  Med-Surg ICU
+  8        Male  89.0         Caucasian                     4063  Med-Surg ICU
+  9      Female  34.0          Hispanic                     4400          SICU
+  10       Male  57.0          Hispanic                     3285          MICU
+  11     Female  51.0         Caucasian                    10185     Neuro ICU
+  12       Male  84.0         Caucasian                     7486  Med-Surg ICU
+  13       Male  71.0         Caucasian                     4384  Med-Surg ICU
+  14       Male  48.0  African American                     4552  Med-Surg ICU
+  15     Female  89.0               NaN                    16904          SICU
+  16       Male  75.0         Caucasian                    10046     CCU-CTICU
+  17       Male  44.0         Caucasian                     5027  Med-Surg ICU
+  18       Male  50.0  African American                    24974          MICU
+  19       Male  81.0          Hispanic                     6773          MICU
+  20       Male  81.0     Other/Unknown                    13194  Med-Surg ICU
+  21     Female  64.0         Caucasian                    16202  Med-Surg ICU
+  22     Female  66.0         Caucasian                    11332     CCU-CTICU
+  23       Male  80.0         Caucasian                    24111          MICU
+  24       Male  48.0  African American                     3908          MICU
+  25       Male  71.0         Caucasian                     1812  Med-Surg ICU
+  26       Male  54.0         Caucasian                      468  Med-Surg ICU
+  27       Male  84.0         Caucasian                     4124  Med-Surg ICU
+  28       Male  70.0         Caucasian                     3570  Med-Surg ICU
+  29       Male  67.0         Caucasian                     9079  Med-Surg ICU
+  ...       ...   ...               ...                      ...           ...
+  10576    Male  89.0         Caucasian                     3950   Cardiac ICU
+  10577    Male  51.0             Asian                    11246  Med-Surg ICU
+  10578    Male  62.0             Asian                    23237  Med-Surg ICU
+  10579  Female  56.0  African American                     2139   Cardiac ICU
+  10580    Male  67.0         Caucasian                     1336     Neuro ICU
+  10581    Male  80.0         Caucasian                    20117   Cardiac ICU
+  10582    Male  76.0     Other/Unknown                    29177   Cardiac ICU
+  10583  Female  80.0  African American                    13119   Cardiac ICU
+  10584  Female  81.0         Caucasian                    20874          MICU
+  10585    Male  64.0         Caucasian                    28726         CTICU
+  10586  Female  77.0         Caucasian                     7302         CTICU
+  10587    Male  75.0         Caucasian                     3897  Med-Surg ICU
+  10588  Female  78.0         Caucasian                    23531  Med-Surg ICU
+  10589  Female  85.0         Caucasian                    17085   Cardiac ICU
+  10590    Male  76.0         Caucasian                    15523   Cardiac ICU
+  10591    Male  72.0         Caucasian                    22587   Cardiac ICU
+  10592    Male  43.0  African American                    10589   Cardiac ICU
+  10593    Male  75.0  African American                     1898   Cardiac ICU
+  10594  Female  83.0         Caucasian                    13245   Cardiac ICU
+  10595    Male  88.0         Caucasian                     6891  Med-Surg ICU
+  10596  Female  87.0         Caucasian                    10743   Cardiac ICU
+  10597    Male  82.0  African American                    10140   Cardiac ICU
+  10598    Male  82.0         Caucasian                     6620   Cardiac ICU
+  10599  Female  63.0         Caucasian                    13193   Cardiac ICU
+  10600    Male  53.0  African American                     8648          MICU
+  10601    Male  61.0         Caucasian                    31068          MICU
+  10602    Male  59.0  African American                    51746          MICU
+  10603    Male  65.0  African American                    42804   Cardiac ICU
+  10604    Male  69.0         Caucasian                     1670   Cardiac ICU
+  10605    Male  67.0         Caucasian                    26189   Cardiac ICU
+  
+  unitdischargeoffset     basos       eos     lymphs      monos   ...     \
+  0                     2804  0.000000  1.000000  23.500000   8.750000   ...
+  1                    14974  0.153846  1.384615   5.461538  11.692308   ...
+  2                     4116  1.250000  5.750000  31.500000  11.500000   ...
+  3                     2243  0.000000  1.400000   9.400000   7.800000   ...
+  4                     7709  0.000000  0.800000   8.166667   8.000000   ...
+  5                     4022  0.000000  2.000000  12.000000  12.000000   ...
+  6                    10521  0.250000  4.375000  11.125000   8.375000   ...
+  7                     3957  0.222222  4.111111  17.666667   6.555556   ...
+  8                     1279  0.000000  0.000000   2.666667   4.333333   ...
+  9                     4458  0.000000  0.800000   4.250000   3.000000   ...
+  10                    2133  1.000000  0.000000  25.500000  11.500000   ...
+  11                    1657  1.000000  0.000000  33.750000   6.250000   ...
+  12                    7469  0.000000  3.000000   5.500000   6.000000   ...
+  13                    4375  0.000000  3.750000  13.250000   8.750000   ...
+  14                    3203  0.333333  3.666667  18.333333   8.333333   ...
+  15                    2740  0.000000  1.600000  13.400000   8.200000   ...
+  16                   10066  0.000000  0.000000   6.142857   5.285714   ...
+  17                     872  1.000000  3.250000  14.750000   7.250000   ...
+  18                    4900  0.000000  0.500000  13.111111   7.555556   ...
+  19                    3478  0.400000  2.400000  34.200000   9.200000   ...
+  20                    1921  0.000000  1.500000  11.500000   7.500000   ...
+  21                    4537  0.000000  1.000000  25.066667   6.000000   ...
+  22                    4400  0.000000  1.000000  16.666667   3.666667   ...
+  23                    6618  0.500000  9.636364   9.909091   5.727273   ...
+  24                    1341  0.000000  1.000000  26.000000   9.000000   ...
+  25                    1268  1.000000  2.000000  17.000000  11.000000   ...
+  26                     468  0.000000  0.000000   6.000000   6.500000   ...
+  27                    2679  0.500000  3.000000  18.500000  10.000000   ...
+  28                    1919  0.000000  2.000000  13.000000   8.000000   ...
+  29                    3023  0.000000  0.000000   3.333333   3.333333   ...
+  ...                    ...       ...       ...        ...        ...   ...
+  10576                 3950  0.000000  2.000000  38.000000   9.000000   ...
+  10577                 1272       NaN       NaN        NaN        NaN   ...
+  10578                17732  1.000000  4.000000  21.000000   5.000000   ...
+  10579                 2139  1.000000  0.000000   7.000000   2.000000   ...
+  10580                 1336  0.500000  1.000000   9.500000   4.500000   ...
+  10581                 4219  1.000000  6.000000  11.000000   6.000000   ...
+  10582                16341  0.444444  0.888889   8.777778   5.111111   ...
+  10583                 3062  0.000000  0.000000  11.000000   4.000000   ...
+  10584                 2397  0.000000  3.000000   4.000000   3.000000   ...
+  10585                19947  1.000000  0.600000  17.600000   9.200000   ...
+  10586                 1379  0.333333  1.000000  14.666667   6.000000   ...
+  10587                 3938  1.000000  0.000000  12.000000   7.000000   ...
+  10588                16066  0.666667  0.333333   7.000000   7.000000   ...
+  10589                 9988  0.000000  0.200000   4.200000   7.400000   ...
+  10590                12941  0.000000  0.000000   6.000000   3.500000   ...
+  10591                 2151  1.000000  3.500000   7.500000  11.000000   ...
+  10592                 6449  1.000000  3.500000   7.000000  10.000000   ...
+  10593                 1198  0.000000  0.000000  10.000000   7.000000   ...
+  10594                 3049  1.000000  0.000000   8.000000   7.000000   ...
+  10595                 1281  0.000000  0.000000   5.000000  11.000000   ...
+  10596                 5311  0.000000  0.000000   6.000000   8.000000   ...
+  10597                 7139       NaN       NaN        NaN        NaN   ...
+  10598                 6620  0.000000  1.000000  20.000000   4.000000   ...
+  10599                13193  0.000000  0.000000   3.000000   7.333333   ...
+  10600                 2740  1.000000  7.000000  18.000000  10.000000   ...
+  10601                20900  0.142857  2.428571  11.571429   8.428571   ...
+  10602                14426  0.166667  0.333333   3.333333   4.833333   ...
+  10603                13288  1.000000  0.333333  12.666667  10.666667   ...
+  10604                 1670  0.000000  0.000000  91.000000   0.000000   ...
+  10605                16302  0.500000  0.000000   3.500000   4.500000   ...
+  
+  HR Lowest  O2 Sat% Current  O2 Sat% Highest  O2 Sat% Lowest  \
+  0             NaN              NaN              NaN             NaN
+  1       92.000000        96.000000        96.000000       96.000000
+  2       72.000000        98.000000        99.000000       92.000000
+  3             NaN              NaN              NaN             NaN
+  4       82.000000        87.000000        87.000000       85.000000
+  5       78.000000        99.000000        99.000000       99.000000
+  6             NaN              NaN              NaN             NaN
+  7             NaN              NaN              NaN             NaN
+  8       98.000000       100.000000       100.000000       98.000000
+  9       83.000000        97.000000        97.000000       97.000000
+  10            NaN              NaN              NaN             NaN
+  11      64.000000        99.000000        99.000000       99.000000
+  12      59.000000        97.000000        99.000000       71.000000
+  13      83.000000        97.000000        97.000000       97.000000
+  14            NaN              NaN              NaN             NaN
+  15            NaN              NaN              NaN             NaN
+  16     143.000000        97.000000        97.000000       97.000000
+  17            NaN              NaN              NaN             NaN
+  18            NaN              NaN              NaN             NaN
+  19            NaN              NaN              NaN             NaN
+  20            NaN              NaN              NaN             NaN
+  21            NaN              NaN              NaN             NaN
+  22      84.000000        98.000000        98.000000       98.000000
+  23            NaN              NaN              NaN             NaN
+  24            NaN              NaN              NaN             NaN
+  25      76.000000        95.000000        96.000000       95.000000
+  26            NaN              NaN              NaN             NaN
+  27            NaN              NaN              NaN             NaN
+  28      65.000000        99.000000        99.000000       99.000000
+  29            NaN              NaN              NaN             NaN
+  ...           ...              ...              ...             ...
+  10576   74.000000        97.000000        97.000000       91.000000
+  10577  114.000000        95.000000        95.000000       95.000000
+  10578   68.000000        98.000000        98.000000       97.000000
+  10579   79.000000        97.000000        97.000000       93.000000
+  10580   56.000000        99.500000       100.000000       98.500000
+  10581   64.750000        92.750000        97.000000       89.000000
+  10582  103.000000        94.000000        96.000000       94.000000
+  10583   66.500000        99.500000        99.500000       98.500000
+  10584   83.000000        98.000000        99.000000       98.000000
+  10585   41.500000       100.000000       100.000000       98.000000
+  10586         NaN              NaN              NaN             NaN
+  10587   93.000000        99.000000        99.000000       99.000000
+  10588   83.400000        94.600000        99.200000       86.200000
+  10589   99.000000        97.000000        98.000000       96.000000
+  10590   81.833333        95.000000        98.166667       90.666667
+  10591   94.000000        99.000000       100.000000       99.000000
+  10592   76.714286        98.428571        99.142857       95.285714
+  10593   64.000000       100.000000       100.000000       99.000000
+  10594   68.000000        98.000000        98.000000       94.000000
+  10595   64.000000        96.000000        99.000000       96.000000
+  10596   41.000000        95.000000        97.000000       90.000000
+  10597   97.000000       100.000000       100.000000       95.857143
+  10598   70.000000       100.000000       100.000000       99.000000
+  10599   87.100000        98.900000        99.800000       96.900000
+  10600   72.000000       100.000000       100.000000      100.000000
+  10601   53.000000        93.000000        99.000000       91.000000
+  10602   98.888889        97.333333        99.333333       87.444444
+  10603   80.900000        95.857143        99.250000       74.500000
+  10604   69.000000        93.000000        93.000000       93.000000
+  10605  115.000000        97.000000        97.000000       97.000000
+  
+  Resp Current  Resp Highest  Resp Lowest  bwi_admission  bwi_discharge  \
+  0               NaN           NaN          NaN      22.285701      22.143301
+  1               NaN           NaN          NaN      39.266745      28.632002
+  2               NaN           NaN          NaN      32.541395      33.062057
+  3               NaN           NaN          NaN      23.717173      23.932504
+  4         15.000000     16.000000    15.000000      62.929687      56.484375
+  5               NaN           NaN          NaN      26.256553      26.881709
+  6               NaN           NaN          NaN      26.415826      24.090279
+  7               NaN           NaN          NaN      32.707107      30.839746
+  8         34.000000     55.000000    34.000000            NaN      18.673608
+  9         38.000000     38.000000    38.000000            NaN      40.785799
+  10              NaN           NaN          NaN            NaN      26.628921
+  11              NaN           NaN          NaN            NaN      18.079517
+  12              NaN           NaN          NaN            NaN      25.881318
+  13        24.000000     24.000000    24.000000      24.769383      23.460691
+  14              NaN           NaN          NaN            NaN      26.152302
+  15              NaN           NaN          NaN            NaN            NaN
+  16              NaN           NaN          NaN            NaN      38.027682
+  17              NaN           NaN          NaN      36.311466      36.780866
+  18              NaN           NaN          NaN      43.323608      41.494005
+  19              NaN           NaN          NaN      28.140503      27.346214
+  20              NaN           NaN          NaN      22.315721      21.256670
+  21              NaN           NaN          NaN            NaN      43.685614
+  22        20.000000           NaN          NaN            NaN      43.480176
+  23              NaN           NaN          NaN      23.017774      20.656210
+  24              NaN           NaN          NaN      28.189299      29.295348
+  25              NaN           NaN          NaN            NaN      37.202169
+  26              NaN           NaN          NaN      38.359682      37.836735
+  27              NaN           NaN          NaN      47.953418      47.241415
+  28        16.000000     16.000000    16.000000      32.395993      33.051403
+  29              NaN           NaN          NaN      32.455678      30.008090
+  ...             ...           ...          ...            ...            ...
+  10576     25.000000     33.000000    24.000000      22.452116      23.882888
+  10577     50.000000     50.000000    50.000000      22.142901      21.953105
+  10578     15.000000     15.000000    15.000000      27.447725      31.442063
+  10579     18.000000     30.000000    18.000000      36.632566      35.172960
+  10580     21.500000     30.500000    20.500000      24.583134      24.583134
+  10581     24.000000     31.000000    15.750000      31.282177      29.169876
+  10582     25.000000     25.000000    23.000000      31.390771      28.626987
+  10583     20.500000     24.000000    12.500000      22.317699      20.747003
+  10584     11.000000     11.000000    10.000000      23.771772      30.008090
+  10585     20.000000     25.500000    16.500000      22.890625      21.367188
+  10586           NaN           NaN          NaN      29.570312      28.046875
+  10587     22.000000     30.000000    19.000000      23.107453            NaN
+  10588     30.000000     38.000000    14.400000      31.658246      28.374912
+  10589     26.500000     36.000000    25.500000      30.677753      28.379945
+  10590     18.000000     30.333333    13.166667      23.880080      22.837566
+  10591     23.000000     25.000000    23.000000      30.263497      27.432396
+  10592     23.428571     42.000000    18.000000      25.162967      21.317770
+  10593     11.000000     14.000000     6.000000      18.779317      18.789673
+  10594     21.500000     33.000000    18.500000      27.955085      26.671059
+  10595     36.000000     36.000000    32.000000      23.065476      21.577381
+  10596           NaN           NaN          NaN      20.424558      20.348912
+  10597     32.428571     48.714286    22.571429      17.492892      17.872485
+  10598      0.000000     25.000000     0.000000      34.883624            NaN
+  10599     21.100000     25.500000    18.800000      34.646103      40.243945
+  10600     25.000000     25.000000    16.000000      24.921875      25.351562
+  10601     20.000000     29.000000    17.000000      40.872631      35.521906
+  10602     21.666667     32.000000    12.000000      24.687500      21.992187
+  10603     32.000000     44.500000    23.800000      19.199423      19.850251
+  10604     23.000000     23.000000    23.000000      26.160256      26.160256
+  10605     22.000000     22.000000    22.000000      52.036376      47.275316
+  
+  outcome
+  0            1
+  1            1
+  2            1
+  3            1
+  4            0
+  5            1
+  6            1
+  7            1
+  8            1
+  9            0
+  10           1
+  11           1
+  12           1
+  13           1
+  14           1
+  15           1
+  16           0
+  17           1
+  18           1
+  19           1
+  20           1
+  21           1
+  22           1
+  23           1
+  24           1
+  25           1
+  26           1
+  27           1
+  28           1
+  29           1
+  ...        ...
+  10576        1
+  10577        1
+  10578        1
+  10579        1
+  10580        0
+  10581        1
+  10582        1
+  10583        1
+  10584        1
+  10585        1
+  10586        1
+  10587        1
+  10588        1
+  10589        0
+  10590        1
+  10591        1
+  10592        1
+  10593        0
+  10594        1
+  10595        1
+  10596        1
+  10597        0
+  10598        0
+  10599        0
+  10600        1
+  10601        1
+  10602        1
+  10603        0
+  10604        0
+  10605        1
+  
+  [10606 rows x 73 columns]
+,#+END_EXAMPLE
+#+end_example
+#+BEGIN_SRC ipython
+list(heart_failure)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[78]:
+,#+BEGIN_EXAMPLE
+  ['Unnamed: 0.1',
+  'gender',
+  'age',
+  'ethnicity',
+  'hospitaldischargeoffset',
+  'unittype',
+  'unitdischargeoffset',
+  'basos',
+  'eos',
+  'lymphs',
+  'monos',
+  'polys',
+  'ALT (SGPT)',
+  'AST (SGOT)',
+  'BNP',
+  'BUN',
+  'Base Excess',
+  'FiO2',
+  'HCO3',
+  'Hct',
+  'Hgb',
+  'MCH',
+  'MCHC',
+  'MCV',
+  'MPV',
+  'O2 Sat (%)',
+  'PT',
+  'PT - INR',
+  'PTT',
+  'RBC',
+  'RDW',
+  'WBC x 1000',
+  'albumin',
+  'alkaline phos.',
+  'anion gap',
+  'bedside glucose',
+  'bicarbonate',
+  'calcium',
+  'chloride',
+  'creatinine',
+  'glucose',
+  'lactate',
+  'magnesium',
+  'pH',
+  'paCO2',
+  'paO2',
+  'phosphate',
+  'platelets x 1000',
+  'potassium',
+  'sodium',
+  'total bilirubin',
+  'total protein',
+  'troponin - I',
+  'urinary specific gravity',
+  'nettotal',
+  'BP (diastolic) Current',
+  'BP (diastolic) Highest',
+  'BP (diastolic) Lowest',
+  'BP (systolic) Current',
+  'BP (systolic) Highest',
+  'BP (systolic) Lowest',
+  'FiO2%',
+  'HR Current',
+  'HR Highest',
+  'HR Lowest',
+  'O2 Sat% Current',
+  'O2 Sat% Highest',
+  'O2 Sat% Lowest',
+  'Resp Current',
+  'Resp Highest',
+  'Resp Lowest',
+  'bwi_admission',
+  'bwi_discharge',
+  'outcome']
+,#+END_EXAMPLE
+#+end_example
+#+BEGIN_SRC ipython
+
+heart_failure.to_csv('/Users/liw17/Documents/EHR/heart_failure_table_foranalysis.csv')
+
+#+END_SRC
+
+**** begin to conduct random forest
+
+***** check heart_failure info
+#+BEGIN_SRC ipython
+heart_failure.info()
+
+#+END_SRC
+
+***** Prepare X and y
+ #+BEGIN_SRC ipython
+ from sklearn.metrics import roc_curve,  precision_recall_curve, auc, average_precision_score
+ from sklearn.model_selection import train_test_split
+ from sklearn.ensemble import RandomForestClassifier
+ X_new = heart_failure[heart_failure.columns[0:len(list(heart_failure))-1]]
+ y = heart_failure['outcome']
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[88]:
+ #+BEGIN_SRC ipython
+ X_new.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[89]:
+ #+BEGIN_SRC ipython
+ y
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[82]:
+ ,#+BEGIN_EXAMPLE
+   0        1
+   1        1
+   2        1
+   3        1
+   4        0
+   5        1
+   6        1
+   7        1
+   8        1
+   9        0
+   10       1
+   11       1
+   12       1
+   13       1
+   14       1
+   15       1
+   16       0
+   17       1
+   18       1
+   19       1
+   20       1
+   21       1
+   22       1
+   23       1
+   24       1
+   25       1
+   26       1
+   27       1
+   28       1
+   29       1
+   ..
+   10576    1
+   10577    1
+   10578    1
+   10579    1
+   10580    0
+   10581    1
+   10582    1
+   10583    1
+   10584    1
+   10585    1
+   10586    1
+   10587    1
+   10588    1
+   10589    0
+   10590    1
+   10591    1
+   10592    1
+   10593    0
+   10594    1
+   10595    1
+   10596    1
+   10597    0
+   10598    0
+   10599    0
+   10600    1
+   10601    1
+   10602    1
+   10603    0
+   10604    0
+   10605    1
+   Name: outcome, Length: 10606, dtype: int64
+ ,#+END_EXAMPLE
+ #+end_example
+
+***** change to dummy variables 
+#+BEGIN_SRC ipython
+ethnicity_dummy = pd.get_dummies(heart_failure['ethnicity'])
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[90]:
+#+BEGIN_SRC ipython
+ethnicity_dummy.drop(['Other/Unknown'], axis = 1, inplace = True)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[89]:
+#+BEGIN_SRC ipython
+
+X_new = pd.concat([X_new, ethnicity_dummy], axis=1)
+#+END_SRC
+
+#+RESULTS:
+: # Out[91]:
+#+BEGIN_SRC ipython
+unittype_dummy = pd.get_dummies(heart_failure['unittype'])
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[92]:
+#+BEGIN_SRC ipython
+unittype_dummy
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[93]:
+,#+BEGIN_EXAMPLE
+  CCU-CTICU  CSICU  CTICU  Cardiac ICU  MICU  Med-Surg ICU  Neuro ICU  \
+  0              0      0      0            0     0             0          1
+  1              0      0      0            0     0             1          0
+  2              1      0      0            0     0             0          0
+  3              0      0      0            0     1             0          0
+  4              1      0      0            0     0             0          0
+  5              0      0      1            0     0             0          0
+  6              0      0      1            0     0             0          0
+  7              0      0      0            0     0             1          0
+  8              0      0      0            0     0             1          0
+  9              0      0      0            0     0             0          0
+  10             0      0      0            0     1             0          0
+  11             0      0      0            0     0             0          1
+  12             0      0      0            0     0             1          0
+  13             0      0      0            0     0             1          0
+  14             0      0      0            0     0             1          0
+  15             0      0      0            0     0             0          0
+  16             1      0      0            0     0             0          0
+  17             0      0      0            0     0             1          0
+  18             0      0      0            0     1             0          0
+  19             0      0      0            0     1             0          0
+  20             0      0      0            0     0             1          0
+  21             0      0      0            0     0             1          0
+  22             1      0      0            0     0             0          0
+  23             0      0      0            0     1             0          0
+  24             0      0      0            0     1             0          0
+  25             0      0      0            0     0             1          0
+  26             0      0      0            0     0             1          0
+  27             0      0      0            0     0             1          0
+  28             0      0      0            0     0             1          0
+  29             0      0      0            0     0             1          0
+  ...          ...    ...    ...          ...   ...           ...        ...
+  10576          0      0      0            1     0             0          0
+  10577          0      0      0            0     0             1          0
+  10578          0      0      0            0     0             1          0
+  10579          0      0      0            1     0             0          0
+  10580          0      0      0            0     0             0          1
+  10581          0      0      0            1     0             0          0
+  10582          0      0      0            1     0             0          0
+  10583          0      0      0            1     0             0          0
+  10584          0      0      0            0     1             0          0
+  10585          0      0      1            0     0             0          0
+  10586          0      0      1            0     0             0          0
+  10587          0      0      0            0     0             1          0
+  10588          0      0      0            0     0             1          0
+  10589          0      0      0            1     0             0          0
+  10590          0      0      0            1     0             0          0
+  10591          0      0      0            1     0             0          0
+  10592          0      0      0            1     0             0          0
+  10593          0      0      0            1     0             0          0
+  10594          0      0      0            1     0             0          0
+  10595          0      0      0            0     0             1          0
+  10596          0      0      0            1     0             0          0
+  10597          0      0      0            1     0             0          0
+  10598          0      0      0            1     0             0          0
+  10599          0      0      0            1     0             0          0
+  10600          0      0      0            0     1             0          0
+  10601          0      0      0            0     1             0          0
+  10602          0      0      0            0     1             0          0
+  10603          0      0      0            1     0             0          0
+  10604          0      0      0            1     0             0          0
+  10605          0      0      0            1     0             0          0
+  
+  SICU
+  0         0
+  1         0
+  2         0
+  3         0
+  4         0
+  5         0
+  6         0
+  7         0
+  8         0
+  9         1
+  10        0
+  11        0
+  12        0
+  13        0
+  14        0
+  15        1
+  16        0
+  17        0
+  18        0
+  19        0
+  20        0
+  21        0
+  22        0
+  23        0
+  24        0
+  25        0
+  26        0
+  27        0
+  28        0
+  29        0
+  ...     ...
+  10576     0
+  10577     0
+  10578     0
+  10579     0
+  10580     0
+  10581     0
+  10582     0
+  10583     0
+  10584     0
+  10585     0
+  10586     0
+  10587     0
+  10588     0
+  10589     0
+  10590     0
+  10591     0
+  10592     0
+  10593     0
+  10594     0
+  10595     0
+  10596     0
+  10597     0
+  10598     0
+  10599     0
+  10600     0
+  10601     0
+  10602     0
+  10603     0
+  10604     0
+  10605     0
+  
+  [10606 rows x 8 columns]
+,#+END_EXAMPLE
+#+end_example
+#+BEGIN_SRC ipython
+unittype_dummy.drop(['SICU'], axis = 1, inplace = True )
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[94]:
+#+BEGIN_SRC ipython
+
+X_new = pd.concat([X_new, unittype_dummy], axis = 1)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[93]:
+#+BEGIN_SRC ipython
+gender_dummy = pd.get_dummies(heart_failure['gender'])
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[94]:
+#+BEGIN_SRC ipython
+gender_dummy.drop(['Male'], axis = 1, inplace = True)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[99]:
+#+BEGIN_SRC ipython
+
+X_new = pd.concat([X_new, gender_dummy], axis = 1)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[95]:
+#+BEGIN_SRC ipython
+X_new.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[97]:
+#+BEGIN_SRC ipython
+X_new.drop(['gender', 'ethnicity', 'unittype'], axis = 1, inplace = True)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[96]:
+#+BEGIN_SRC ipython
+
+X_new.to_csv('/Users/liw17/Documents/EHR/X_new_heart_randomforest_collinear.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[98]:
+
+***** read in the training data 
+#+BEGIN_SRC ipython
+
+X_new=pd.read_csv('/Users/liw17/Documents/EHR/X_new_heart_randomforest_collinear.csv')
+
+#+END_SRC
+***** fill in missing value by mean value
+#+BEGIN_SRC ipython
+#X_newna = X_new_dropna07.fillna(X_new_dropna07.mean())
+X_new = X_new.replace([np.inf, -np.inf], np.nan)
+
+X_newna = X_new.fillna(X_new.mean())
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[99]:
+***** get rid of NA column 
+#+BEGIN_SRC ipython
+
+X_new_dropna07 = X_new.loc[:, pd.notnull(X_new).sum()>len(X_new)*.7]
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[197]:
+
+#+BEGIN_SRC ipython
+X_newna.to_csv('/Users/liw17/Documents/EHR/X_newNA_heart_randomforest.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[109]:
+#+BEGIN_SRC ipython
+X_newna.drop(['hospitaldischargeoffset', 'unitdischargeoffset'], axis = 1, inplace = True)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[209]:
+
+***** split to training and validation 
+#+BEGIN_SRC ipython
+X_train, X_test, y_train, y_test = train_test_split(X_newna, y, test_size=0.2)
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[100]:
+
+***** train model 
+max_features = 20, max_depth = 10, accuracy = 0.89
+#+BEGIN_SRC ipython
+clf=RandomForestClassifier(n_estimators=800, max_features=30, max_depth=20)
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[101]:
+#+BEGIN_SRC ipython
+clf.fit(X_train,y_train)
+
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[102]:
+,#+BEGIN_EXAMPLE
+  RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+  max_depth=20, max_features=30, max_leaf_nodes=None,
+  min_impurity_decrease=0.0, min_impurity_split=None,
+  min_samples_leaf=1, min_samples_split=2,
+  min_weight_fraction_leaf=0.0, n_estimators=800, n_jobs=1,
+  oob_score=False, random_state=None, verbose=0,
+  warm_start=False)
+,#+END_EXAMPLE
+#+end_example
+
+***** prediction
+#+BEGIN_SRC ipython
+y_pred=clf.predict_proba(X_test)[:, 1]
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[103]:
+#+BEGIN_SRC ipython
+print(y_pred)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[231]:
+#+BEGIN_SRC ipython
+y_test.shape
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[234]:
+: : (2122,)
+
+#+BEGIN_SRC ipython
+y_pred_int=clf.predict(X_test)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[104]:
+
+***** test accuracy
+#+BEGIN_SRC ipython
+from sklearn import metrics
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred_int))
+
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[105]:
+
+***** roc curve
+#+BEGIN_SRC ipython
+fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=2)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[121]:
+#+BEGIN_SRC ipython
+from sklearn.metrics import roc_auc_score
+
+roc_value = roc_auc_score(y_test, y_pred)
+
+print(roc_value)
+#+END_SRC
+
+#+RESULTS:
+: # Out[106]:
+#+BEGIN_SRC ipython
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import roc_curve
+base_fpr, base_tpr, _ = roc_curve(y_test, [1 for _ in range(len(y_test))])
+model_fpr, model_tpr, _ = roc_curve(y_test, y_pred)
+
+plt.figure(figsize = (8, 6))
+plt.rcParams['font.size'] = 16
+    
+    # Plot both curves
+plt.plot(base_fpr, base_tpr, 'b', label = 'baseline')
+plt.plot(model_fpr, model_tpr, 'r', label = 'model')
+plt.legend();
+plt.xlabel('False Positive Rate'); 
+plt.ylabel('True Positive Rate'); plt.title('ROC Curves');
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[107]:
+: [[file:./obipy-resources/26957wwN.png]]
+#+BEGIN_SRC ipython
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[129]:
+#+BEGIN_SRC ipython
+feature_imp = pd.Series(clf.feature_importances_,index=list(X_newna)).sort_values(ascending=False)
+print(feature_imp)
+np.save('feature_imp4', feature_imp)
+#+END_SRC
+
+#+RESULTS:
+: # Out[120]:
+
+***** logistic regression
+#+BEGIN_SRC ipython
+from sklearn.linear_model import LogisticRegression
+l = LogisticRegression()
+l.fit(X_train, y_train)
+y_pred_int_LR = l.predict(X_test)
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred_int_LR))
+#+END_SRC
+
+#+RESULTS:
+: # Out[226]:
+#+BEGIN_SRC ipython
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Creating a bar plot
+plt.figure(figsize = (40, 30))
+sns.barplot(x=feature_imp, y=feature_imp.index)
+# Add labels to your graph
+
+plt.xlabel('Feature Importance Score')
+plt.ylabel('Features')
+plt.title("Visualizing Important Features")
+plt.legend()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[121]:
+: : <matplotlib.legend.Legend at 0x1176a88d0>
+: [[file:./obipy-resources/26957XPg.png]]
+
+*** Stroke
+
+**** import all the packages
+#+BEGIN_SRC ipython
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import roc_curve,  precision_recall_curve, auc, average_precision_score
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[1]:
+
+**** Read in table
+#+BEGIN_SRC ipython
+
+stroke = pd.read_csv('/Users/liw17/Documents/EHR/patient_lab_intakeoutput_physicalexam_stroke_outcome_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[2]:
+
+**** drop unrelated columns 
+#+BEGIN_SRC ipython
+stroke.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[3]:
+#+BEGIN_SRC ipython
+
+stroke.drop(['Unnamed: 0', 'Unnamed: 0.1', 'patientunitstayid', 'patienthealthsystemstayid', 'hospitalid', 'wardid', 'apacheadmissiondx', 'admissionheight', 'hospitaladmittime24', 'hospitaladmitoffset', 'hospitaladmitsource', 'hospitaldischargeyear', 'hospitaldischargetime24', 'hospitaldischargelocation', 'hospitaldischargestatus', 'unitadmittime24', 'unitadmitsource', 'unitvisitnumber', 'unitstaytype', 'admissionweight', 'dischargeweight', 'unitdischargetime24', 'unitdischargelocation', 'unitdischargestatus', 'uniquepid'], axis = 1, inplace = True)
+#+END_SRC
+
+#+RESULTS:
+: # Out[5]:
+#+BEGIN_SRC ipython
+
+stroke.to_csv('/Users/liw17/Documents/EHR/stroke_table_foranalysis.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[6]:
+
+**** begin to conduct random forest
+
+***** double check the columns of stroke 
+#+BEGIN_SRC ipython
+stroke.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[11]:
+
+***** prepare X and y 
+#+BEGIN_SRC ipython
+
+X_new = stroke[stroke.columns[0:len(list(stroke))-1]]
+y = stroke['outcome']
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[186]:
+#+BEGIN_SRC ipython
+X_new.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[13]:
+
+***** change to dummy variables
+#+BEGIN_SRC ipython
+
+ethnicity_dummy = pd.get_dummies(stroke['ethnicity'])
+
+X_new = pd.concat([X_new, ethnicity_dummy], axis=1)
+
+unittype_dummy = pd.get_dummies(stroke['unittype'])
+
+X_new = pd.concat([X_new, unittype_dummy], axis = 1)
+
+gender_dummy = pd.get_dummies(stroke['gender'])
+
+X_new = pd.concat([X_new, gender_dummy], axis = 1)
+
+X_new.drop(['gender', 'ethnicity', 'unittype'], axis = 1, inplace = True)
+
+X_new.to_csv('/Users/liw17/Documents/EHR/X_new_stroke_randomforest_collinear.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[14]:
+#+BEGIN_SRC ipython
+
+X_new=pd.read_csv('/Users/liw17/Documents/EHR/X_new_stroke_randomforest_collinear.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[187]:
+
+***** fill in missing value by mean value 
+#+BEGIN_SRC ipython
+
+X_new = X_new.replace([np.inf, -np.inf], np.nan)
+X_newna = X_new.fillna(X_new.mean())
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[188]:
+#+BEGIN_SRC ipython
+X_new.mean()
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[25]:
+,#+BEGIN_EXAMPLE
+  age                        6.724360e+01
+  hospitaldischargeoffset    1.111545e+04
+  unitdischargeoffset        5.608405e+03
+  basos                      3.696097e-01
+  eos                        1.809596e+00
+  lymphs                     1.787479e+01
+  monos                      8.054977e+00
+  polys                      7.135514e+01
+  ALT (SGPT)                 5.250164e+01
+  AST (SGOT)                 6.313235e+01
+  BUN                        2.131701e+01
+  HDL                        4.480333e+01
+  Hct                        3.643295e+01
+  Hgb                        1.211013e+01
+  LDL                        9.119716e+01
+  MCH                        2.992958e+01
+  MCHC                       3.317471e+01
+  MCV                        9.022744e+01
+  MPV                        9.859939e+00
+  PT                         1.426142e+01
+  PT - INR                   1.211952e+00
+  PTT                        3.303065e+01
+  RBC                        4.054418e+00
+  RDW                        1.456178e+01
+  WBC x 1000                 1.040564e+01
+  albumin                    3.290540e+00
+  alkaline phos.             9.066706e+01
+  anion gap                  1.045450e+01
+  bedside glucose            1.383704e+02
+  bicarbonate                2.488473e+01
+  ...
+  BP (systolic) Lowest       1.264538e+02
+  FiO2%                      4.539046e+01
+  HR Current                 8.092800e+01
+  HR Highest                 8.854225e+01
+  HR Lowest                  7.519542e+01
+  O2 Sat% Current            9.741782e+01
+  O2 Sat% Highest            9.846946e+01
+  O2 Sat% Lowest             9.513809e+01
+  Resp Current               1.924871e+01
+  Resp Highest               2.302902e+01
+  Resp Lowest                1.635469e+01
+  bwi_admission                       inf
+  bwi_discharge                       inf
+  African American           1.213973e-01
+  Asian                      1.948351e-02
+  Caucasian                  7.517869e-01
+  Hispanic                   4.530782e-02
+  Native American            4.496196e-03
+  Other/Unknown              5.164861e-02
+  CCU-CTICU                  3.020521e-02
+  CSICU                      4.035047e-03
+  CTICU                      1.498732e-02
+  Cardiac ICU                4.657597e-02
+  MICU                       6.329260e-02
+  Med-Surg ICU               4.236800e-01
+  Neuro ICU                  3.519714e-01
+  SICU                       6.525248e-02
+  Female                     4.839751e-01
+  Male                       5.159096e-01
+  Unknown                    1.152871e-04
+  Length: 80, dtype: float64
+,#+END_EXAMPLE
+#+end_example
+
+***** drop unitdischargeoffset  
+#+BEGIN_SRC ipython
+
+X_newna.drop(['hospitaldischargeoffset', 'unitdischargeoffset'], axis = 1, inplace = True)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[39]:
+#+BEGIN_SRC ipython
+
+
+X_newna.to_csv('/Users/liw17/Documents/EHR/X_newna_stroke_randomforest_collinear_dropoffset.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[17]:
+
+***** replace the infinity value by np.mean
+#+BEGIN_SRC ipython
+X_newna = X_new.replace([np.inf, -np.inf], np.nan)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[26]:
+#+BEGIN_SRC ipython
+X_newna.mean()
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[28]:
+,#+BEGIN_EXAMPLE
+  age                           67.243602
+  hospitaldischargeoffset    11115.453770
+  unitdischargeoffset         5608.404888
+  basos                          0.369610
+  eos                            1.809596
+  lymphs                        17.874790
+  monos                          8.054977
+  polys                         71.355139
+  ALT (SGPT)                    52.501640
+  AST (SGOT)                    63.132350
+  BUN                           21.317011
+  HDL                           44.803327
+  Hct                           36.432950
+  Hgb                           12.110133
+  LDL                           91.197157
+  MCH                           29.929578
+  MCHC                          33.174710
+  MCV                           90.227440
+  MPV                            9.859939
+  PT                            14.261422
+  PT - INR                       1.211952
+  PTT                           33.030647
+  RBC                            4.054418
+  RDW                           14.561781
+  WBC x 1000                    10.405641
+  albumin                        3.290540
+  alkaline phos.                90.667060
+  anion gap                     10.454505
+  bedside glucose              138.370426
+  bicarbonate                   24.884735
+  ...
+  BP (systolic) Lowest         126.453830
+  FiO2%                         45.390460
+  HR Current                    80.928003
+  HR Highest                    88.542247
+  HR Lowest                     75.195421
+  O2 Sat% Current               97.417816
+  O2 Sat% Highest               98.469456
+  O2 Sat% Lowest                95.138085
+  Resp Current                  19.248706
+  Resp Highest                  23.029019
+  Resp Lowest                   16.354687
+  bwi_admission                237.655754
+  bwi_discharge                320.767230
+  African American               0.121397
+  Asian                          0.019484
+  Caucasian                      0.751787
+  Hispanic                       0.045308
+  Native American                0.004496
+  Other/Unknown                  0.051649
+  CCU-CTICU                      0.030205
+  CSICU                          0.004035
+  CTICU                          0.014987
+  Cardiac ICU                    0.046576
+  MICU                           0.063293
+  Med-Surg ICU                   0.423680
+  Neuro ICU                      0.351971
+  SICU                           0.065252
+  Female                         0.483975
+  Male                           0.515910
+  Unknown                        0.000115
+  Length: 80, dtype: float64
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+X_newna = X_newna.fillna(X_newna.mean())
+#+END_SRC
+
+#+RESULTS:
+: # Out[29]:
+
+#+BEGIN_SRC ipython
+
+X_newna.to_csv('/Users/liw17/Documents/EHR/X_newna_stroke_randomforest_collinear_dropoffset_fill_inf.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[24]:
+
+***** split into training and validation 
+#+BEGIN_SRC ipython
+
+X_train, X_test, y_train, y_test = train_test_split(X_newna, y, test_size=0.2)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[43]:
+
+#+BEGIN_SRC ipython
+
+
+#+END_SRC
+***** train the model 
+#+BEGIN_SRC ipython
+
+clf=RandomForestClassifier(n_estimators=800, max_features=30, max_depth=20)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[44]:
+#+BEGIN_SRC ipython
+
+clf.fit(X_train,y_train)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[45]:
+,#+BEGIN_EXAMPLE
+  RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+  max_depth=20, max_features=30, max_leaf_nodes=None,
+  min_impurity_decrease=0.0, min_impurity_split=None,
+  min_samples_leaf=1, min_samples_split=2,
+  min_weight_fraction_leaf=0.0, n_estimators=800, n_jobs=1,
+  oob_score=False, random_state=None, verbose=0,
+  warm_start=False)
+,#+END_EXAMPLE
+#+end_example
+save model
+#+BEGIN_SRC ipython
+import _pickle as cPickle
+with open('stroke_randomforest_with_two_offset', 'wb') as f:
+    cPickle.dump(clf, f)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[42]:
+
+***** prediction 
+#+BEGIN_SRC ipython
+
+y_pred=clf.predict_proba(X_test)[:, 1]
+y_pred_int=clf.predict(X_test)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[46]:
+
+***** test accuracy
+#+BEGIN_SRC ipython
+
+from sklearn import metrics
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred_int))
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[47]:
+
+***** ROC curve
+#+BEGIN_SRC ipython
+
+from sklearn.metrics import roc_auc_score
+
+roc_value = roc_auc_score(y_test, y_pred)
+
+print(roc_value)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[48]:
+
+#+BEGIN_SRC ipython
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import roc_curve
+base_fpr, base_tpr, _ = roc_curve(y_test, [1 for _ in range(len(y_test))])
+model_fpr, model_tpr, _ = roc_curve(y_test, y_pred)
+
+plt.figure(figsize = (8, 6))
+plt.rcParams['font.size'] = 16
+    
+    # Plot both curves
+plt.plot(base_fpr, base_tpr, 'b', label = 'baseline')
+plt.plot(model_fpr, model_tpr, 'r', label = 'model')
+plt.legend();
+plt.xlabel('False Positive Rate'); 
+plt.ylabel('True Positive Rate'); plt.title('ROC Curves');
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[49]:
+: [[file:./obipy-resources/269579zf.png]]
+
+#+BEGIN_SRC ipython
+
+feature_imp = pd.Series(clf.feature_importances_,index=list(X_newna)).sort_values(ascending=False)
+print(feature_imp)
+np.save('featurestroke_imp1', feature_imp)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[50]:
+
+***** logistic regression
+#+BEGIN_SRC ipython
+
+from sklearn.linear_model import LogisticRegression
+l = LogisticRegression()
+l.fit(X_train, y_train)
+y_pred_int_LR = l.predict(X_test)
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred_int_LR))
+
+#+END_SRC
+#+BEGIN_SRC ipython
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Creating a bar plot
+plt.figure(figsize = (40, 30))
+sns.barplot(x=feature_imp, y=feature_imp.index)
+# Add labels to your graph
+
+plt.xlabel('Feature Importance Score')
+plt.ylabel('Features')
+plt.title("Visualizing Important Features")
+plt.legend()
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[51]:
+: : <matplotlib.legend.Legend at 0x1165b1550>
+: [[file:./obipy-resources/26957K-l.png]]
+
+
+*** Myocardial Infarction
+
+**** import all the packages
+#+BEGIN_SRC ipython
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import roc_curve,  precision_recall_curve, auc, average_precision_score
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[1]:
+
+**** Read in table
+#+BEGIN_SRC ipython
+
+myocardial = pd.read_csv('/Users/liw17/Documents/EHR/patient_lab_intakeoutput_physicalexam_myocardial_outcome_final_11_24.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[52]:
+
+**** drop unrelated columns 
+#+BEGIN_SRC ipython
+myocardial.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[126]:
+#+BEGIN_SRC ipython
+
+myocardial.drop(['Unnamed: 0', 'Unnamed: 0.1', 'patientunitstayid', 'patienthealthsystemstayid', 'hospitalid', 'wardid', 'apacheadmissiondx', 'admissionheight', 'hospitaladmittime24', 'hospitaladmitoffset', 'hospitaladmitsource', 'hospitaldischargeyear', 'hospitaldischargetime24', 'hospitaldischargelocation', 'hospitaldischargestatus', 'unitadmittime24', 'unitadmitsource', 'unitvisitnumber', 'unitstaytype', 'admissionweight', 'dischargeweight', 'unitdischargetime24', 'unitdischargelocation', 'unitdischargestatus', 'uniquepid'], axis = 1, inplace = True)
+#+END_SRC
+
+#+RESULTS:
+: # Out[54]:
+#+BEGIN_SRC ipython
+
+myocardial.to_csv('/Users/liw17/Documents/EHR/myocardial_table_foranalysis.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[122]:
+
+**** begin to conduct random forest
+
+***** double check the columns of stroke 
+#+BEGIN_SRC ipython
+myocardial.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[123]:
+
+***** prepare X and y 
+#+BEGIN_SRC ipython
+
+X_new = myocardial[myocardial.columns[0:len(list(myocardial))-1]]
+y = myocardial['outcome']
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[57]:
+#+BEGIN_SRC ipython
+y = myocardial['outcome']
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[203]:
+
+***** change to dummy variables
+#+BEGIN_SRC ipython
+
+ethnicity_dummy = pd.get_dummies(myocardial['ethnicity'])
+
+X_new = pd.concat([X_new, ethnicity_dummy], axis=1)
+
+unittype_dummy = pd.get_dummies(myocardial['unittype'])
+
+X_new = pd.concat([X_new, unittype_dummy], axis = 1)
+
+gender_dummy = pd.get_dummies(myocardial['gender'])
+
+X_new = pd.concat([X_new, gender_dummy], axis = 1)
+
+X_new.drop(['gender', 'ethnicity', 'unittype'], axis = 1, inplace = True)
+
+X_new.to_csv('/Users/liw17/Documents/EHR/X_new_myocardial_randomforest_collinear.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[59]:
+
+***** fill in missing value by mean value
+#+BEGIN_SRC ipython
+
+X_new=pd.read_csv('/Users/liw17/Documents/EHR/X_new_myocardial_randomforest_collinear.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[201]:
+
+#+BEGIN_SRC ipython
+
+X_new = X_new.replace([np.inf, -np.inf], np.nan)
+X_newna = X_new.fillna(X_new.mean())
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[202]:
+#+BEGIN_SRC ipython
+X_new.mean()
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[25]:
+,#+BEGIN_EXAMPLE
+  age                        6.724360e+01
+  hospitaldischargeoffset    1.111545e+04
+  unitdischargeoffset        5.608405e+03
+  basos                      3.696097e-01
+  eos                        1.809596e+00
+  lymphs                     1.787479e+01
+  monos                      8.054977e+00
+  polys                      7.135514e+01
+  ALT (SGPT)                 5.250164e+01
+  AST (SGOT)                 6.313235e+01
+  BUN                        2.131701e+01
+  HDL                        4.480333e+01
+  Hct                        3.643295e+01
+  Hgb                        1.211013e+01
+  LDL                        9.119716e+01
+  MCH                        2.992958e+01
+  MCHC                       3.317471e+01
+  MCV                        9.022744e+01
+  MPV                        9.859939e+00
+  PT                         1.426142e+01
+  PT - INR                   1.211952e+00
+  PTT                        3.303065e+01
+  RBC                        4.054418e+00
+  RDW                        1.456178e+01
+  WBC x 1000                 1.040564e+01
+  albumin                    3.290540e+00
+  alkaline phos.             9.066706e+01
+  anion gap                  1.045450e+01
+  bedside glucose            1.383704e+02
+  bicarbonate                2.488473e+01
+  ...
+  BP (systolic) Lowest       1.264538e+02
+  FiO2%                      4.539046e+01
+  HR Current                 8.092800e+01
+  HR Highest                 8.854225e+01
+  HR Lowest                  7.519542e+01
+  O2 Sat% Current            9.741782e+01
+  O2 Sat% Highest            9.846946e+01
+  O2 Sat% Lowest             9.513809e+01
+  Resp Current               1.924871e+01
+  Resp Highest               2.302902e+01
+  Resp Lowest                1.635469e+01
+  bwi_admission                       inf
+  bwi_discharge                       inf
+  African American           1.213973e-01
+  Asian                      1.948351e-02
+  Caucasian                  7.517869e-01
+  Hispanic                   4.530782e-02
+  Native American            4.496196e-03
+  Other/Unknown              5.164861e-02
+  CCU-CTICU                  3.020521e-02
+  CSICU                      4.035047e-03
+  CTICU                      1.498732e-02
+  Cardiac ICU                4.657597e-02
+  MICU                       6.329260e-02
+  Med-Surg ICU               4.236800e-01
+  Neuro ICU                  3.519714e-01
+  SICU                       6.525248e-02
+  Female                     4.839751e-01
+  Male                       5.159096e-01
+  Unknown                    1.152871e-04
+  Length: 80, dtype: float64
+,#+END_EXAMPLE
+#+end_example
+
+***** drop unitdischargeoffset  
+#+BEGIN_SRC ipython
+
+X_newna.drop(['hospitaldischargeoffset', 'unitdischargeoffset'], axis = 1, inplace = True)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[72]:
+#+BEGIN_SRC ipython
+
+
+X_newna.to_csv('/Users/liw17/Documents/EHR/X_newna_myocardial_randomforest_collinear_dropoffset.csv')
+#+END_SRC
+
+#+RESULTS:
+: # Out[61]:
+
+***** replace the infinity value by np.mean
+#+BEGIN_SRC ipython
+X_newna = X_new.replace([np.inf, -np.inf], np.nan)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[26]:
+#+BEGIN_SRC ipython
+X_newna.mean()
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[28]:
+,#+BEGIN_EXAMPLE
+  age                           67.243602
+  hospitaldischargeoffset    11115.453770
+  unitdischargeoffset         5608.404888
+  basos                          0.369610
+  eos                            1.809596
+  lymphs                        17.874790
+  monos                          8.054977
+  polys                         71.355139
+  ALT (SGPT)                    52.501640
+  AST (SGOT)                    63.132350
+  BUN                           21.317011
+  HDL                           44.803327
+  Hct                           36.432950
+  Hgb                           12.110133
+  LDL                           91.197157
+  MCH                           29.929578
+  MCHC                          33.174710
+  MCV                           90.227440
+  MPV                            9.859939
+  PT                            14.261422
+  PT - INR                       1.211952
+  PTT                           33.030647
+  RBC                            4.054418
+  RDW                           14.561781
+  WBC x 1000                    10.405641
+  albumin                        3.290540
+  alkaline phos.                90.667060
+  anion gap                     10.454505
+  bedside glucose              138.370426
+  bicarbonate                   24.884735
+  ...
+  BP (systolic) Lowest         126.453830
+  FiO2%                         45.390460
+  HR Current                    80.928003
+  HR Highest                    88.542247
+  HR Lowest                     75.195421
+  O2 Sat% Current               97.417816
+  O2 Sat% Highest               98.469456
+  O2 Sat% Lowest                95.138085
+  Resp Current                  19.248706
+  Resp Highest                  23.029019
+  Resp Lowest                   16.354687
+  bwi_admission                237.655754
+  bwi_discharge                320.767230
+  African American               0.121397
+  Asian                          0.019484
+  Caucasian                      0.751787
+  Hispanic                       0.045308
+  Native American                0.004496
+  Other/Unknown                  0.051649
+  CCU-CTICU                      0.030205
+  CSICU                          0.004035
+  CTICU                          0.014987
+  Cardiac ICU                    0.046576
+  MICU                           0.063293
+  Med-Surg ICU                   0.423680
+  Neuro ICU                      0.351971
+  SICU                           0.065252
+  Female                         0.483975
+  Male                           0.515910
+  Unknown                        0.000115
+  Length: 80, dtype: float64
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+X_newna = X_newna.fillna(X_newna.mean())
+#+END_SRC
+
+#+RESULTS:
+: # Out[29]:
+
+#+BEGIN_SRC ipython
+
+X_newna.to_csv('/Users/liw17/Documents/EHR/X_newna_myocardial_randomforest_collinear_dropoffset_fill_inf.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[24]:
+
+***** split into training and validation 
+#+BEGIN_SRC ipython
+
+X_train, X_test, y_train, y_test = train_test_split(X_newna, y, test_size=0.2)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[74]:
+
+#+BEGIN_SRC ipython
+
+
+#+END_SRC
+***** train the model 
+#+BEGIN_SRC ipython
+
+clf=RandomForestClassifier(n_estimators=800, max_features=30, max_depth=20)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[75]:
+#+BEGIN_SRC ipython
+
+clf.fit(X_train,y_train)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[76]:
+,#+BEGIN_EXAMPLE
+  RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+  max_depth=20, max_features=30, max_leaf_nodes=None,
+  min_impurity_decrease=0.0, min_impurity_split=None,
+  min_samples_leaf=1, min_samples_split=2,
+  min_weight_fraction_leaf=0.0, n_estimators=800, n_jobs=1,
+  oob_score=False, random_state=None, verbose=0,
+  warm_start=False)
+,#+END_EXAMPLE
+#+end_example
+save model
+#+BEGIN_SRC ipython
+import _pickle as cPickle
+with open('myocardial_randomforest_with_two_offset', 'wb') as f:
+    cPickle.dump(clf, f)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[73]:
+
+***** prediction 
+#+BEGIN_SRC ipython
+
+y_pred=clf.predict_proba(X_test)[:, 1]
+y_pred_int=clf.predict(X_test)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[77]:
+
+***** test accuracy
+#+BEGIN_SRC ipython
+
+from sklearn import metrics
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred_int))
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[78]:
+
+***** ROC curve
+#+BEGIN_SRC ipython
+
+from sklearn.metrics import roc_auc_score
+
+roc_value = roc_auc_score(y_test, y_pred)
+
+print(roc_value)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[79]:
+
+#+BEGIN_SRC ipython
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import roc_curve
+base_fpr, base_tpr, _ = roc_curve(y_test, [1 for _ in range(len(y_test))])
+model_fpr, model_tpr, _ = roc_curve(y_test, y_pred)
+
+plt.figure(figsize = (8, 6))
+plt.rcParams['font.size'] = 16
+    
+    # Plot both curves
+plt.plot(base_fpr, base_tpr, 'b', label = 'baseline')
+plt.plot(model_fpr, model_tpr, 'r', label = 'model')
+plt.legend();
+plt.xlabel('False Positive Rate'); 
+plt.ylabel('True Positive Rate'); plt.title('ROC Curves');
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[80]:
+: [[file:./obipy-resources/26957WcB.png]]
+
+#+BEGIN_SRC ipython
+
+feature_imp = pd.Series(clf.feature_importances_,index=list(X_newna)).sort_values(ascending=False)
+print(feature_imp)
+np.save('featuremyocardial_imp1withnooffset', feature_imp)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[81]:
+
+***** logistic regression
+#+BEGIN_SRC ipython
+
+from sklearn.linear_model import LogisticRegression
+l = LogisticRegression()
+l.fit(X_train, y_train)
+y_pred_int_LR = l.predict(X_test)
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred_int_LR))
+
+#+END_SRC
+#+BEGIN_SRC ipython
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Creating a bar plot
+plt.figure(figsize = (40, 30))
+sns.barplot(x=feature_imp, y=feature_imp.index)
+# Add labels to your graph
+
+plt.xlabel('Feature Importance Score')
+plt.ylabel('Features')
+plt.title("Visualizing Important Features")
+plt.legend()
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[82]:
+: : <matplotlib.legend.Legend at 0x1153d7160>
+: [[file:./obipy-resources/26957jmH.png]]
+
+
+** statistic logistic regression 
+ #+BEGIN_SRC ipython
+ import statsmodels.api as sm
+ import pylab as pl
+
+ #+END_SRC
+
+*** Myocardial Infarction
+#+BEGIN_SRC ipython
+myocardial = pd.read_csv('/Users/liw17/Documents/EHR/myocardial_table_foranalysis.csv')
+ 
+#+END_SRC
+#+BEGIN_SRC ipython
+myocardial.describe().to_csv('/Users/liw17/Documents/EHR/myocardial_describe.csv')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[125]:
+#+BEGIN_SRC ipython
+import researchpy as rp
+table_myocardial, results_myocardial = rp.crosstab(myocardial['outcome'], myocardial['ethnicity'], prop= 'col', test= 'chi-square')
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[133]:
+#+BEGIN_SRC ipython
+
+crosstab_myocardial_ethnicity = pd.crosstab(myocardial['ethnicity'], myocardial['outcome'])
+crosstab_myocardial_gender = pd.crosstab(myocardial['gender'], myocardial['outcome'])
+crosstab_myocardial_unittype = pd.crosstab(myocardial['unittype'], myocardial['outcome'])
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[141]:
+
+#+BEGIN_SRC ipython
+myocardial.info()
+  
+#+END_SRC
+
+#+RESULTS:
+: # Out[140]:
+#+BEGIN_SRC ipython
+  
+table_stroke_ethnicity, results_stroke_ethnicity = rp.crosstab(stroke['ethnicity'], stroke['outcome'], prop= 'col', test= 'chi-square')
+  
+#+END_SRC
+
+#+RESULTS:
+: # Out[215]:
+#+BEGIN_SRC ipython
+  # table_stroke_ethnicity
+  table_stroke_ethnicity
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[216]:
+,#+BEGIN_EXAMPLE
+  outcome
+  0       1     All
+  ethnicity
+  African American   10.90   12.44   12.21
+  Asian               1.91    1.97    1.96
+  Caucasian          76.05   75.55   75.62
+  Hispanic            4.93    4.49    4.56
+  Native American     0.24    0.49    0.45
+  Other/Unknown       5.97    5.06    5.20
+  All               100.00  100.00  100.00
+,#+END_EXAMPLE
+#+end_example
+#+BEGIN_SRC ipython
+results_stroke_ethnicity
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[217]:
+: #+BEGIN_EXAMPLE
+:   Chi-square test  results
+:   0  Pearson Chi-square ( 5.0) =    5.7539
+:   1                    p-value =    0.3309
+:   2                 Cramer's V =    0.0258
+: #+END_EXAMPLE
+#+BEGIN_SRC ipython
+
+table_stroke_unittype, results_stroke_unittype = rp.crosstab(stroke['unittype'], stroke['outcome'], prop= 'col', test= 'chi-square')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[218]:
+#+BEGIN_SRC ipython
+table_stroke_unittype
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[219]:
+,#+BEGIN_EXAMPLE
+  outcome
+  0       1     All
+  unittype
+  CCU-CTICU       3.23    2.98    3.02
+  CSICU           0.87    0.32    0.40
+  CTICU           1.18    1.55    1.50
+  Cardiac ICU     5.59    4.50    4.66
+  MICU            7.09    6.20    6.33
+  Med-Surg ICU   41.84   42.46   42.37
+  Neuro ICU      31.76   35.79   35.20
+  SICU            8.43    6.20    6.53
+  All           100.00  100.00  100.00
+,#+END_EXAMPLE
+#+end_example
+#+BEGIN_SRC ipython
+results_stroke_unittype
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[220]:
+: #+BEGIN_EXAMPLE
+:   Chi-square test  results
+:   0  Pearson Chi-square ( 7.0) =   26.6662
+:   1                    p-value =    0.0004
+:   2                 Cramer's V =    0.0554
+: #+END_EXAMPLE
+
+#+BEGIN_SRC ipython
+
+table_stroke_gender, results_stroke_gender = rp.crosstab(stroke['gender'], stroke['outcome'], prop= 'col', test= 'chi-square')
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[213]:
+#+BEGIN_SRC ipython
+table_stroke_gender
+48.40%
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[214]:
+,#+BEGIN_EXAMPLE
+  outcome
+  0       1     All
+  gender
+  Female    48.54   48.37   48.40
+  Male      51.46   51.61   51.59
+  Unknown    0.00    0.01    0.01
+  All      100.00  100.00  100.00
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+crosstab_myocardial_ethnicity
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[148]:
+,#+BEGIN_EXAMPLE
+  outcome             0     1
+  ethnicity
+  African American   52   623
+  Asian              14    92
+  Caucasian         580  5502
+  Hispanic           29   267
+  Native American     3    20
+  Other/Unknown      35   404
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+from scipy import stats 
+stats.chi2_contingency(crosstab_myocardial_ethnicity)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[144]:
+,#+BEGIN_EXAMPLE
+  (5.687814388547042,
+  0.33779041921847686,
+  5,
+  array([[6.31511613e+01, 6.11848839e+02],
+  [9.91707125e+00, 9.60829287e+01],
+  [5.69015352e+02, 5.51298465e+03],
+  [2.76929537e+01, 2.68307046e+02],
+  [2.15181735e+00, 2.08481827e+01],
+  [4.10716441e+01, 3.97928356e+02]]))
+,#+END_EXAMPLE
+#+end_example
+#+BEGIN_SRC ipython
+crosstab_myocardial_gender
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[147]:
+: #+BEGIN_EXAMPLE
+:   outcome    0     1
+:   gender
+:   Female   316  2528
+:   Male     402  4482
+: #+END_EXAMPLE
+
+#+BEGIN_SRC ipython
+stats.chi2_contingency(crosstab_myocardial_gender)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[143]:
+: #+BEGIN_EXAMPLE
+:   (17.35125161705712,
+:   3.1069358653065495e-05,
+:   1,
+:   array([[ 264.23291925, 2579.76708075],
+:   [ 453.76708075, 4430.23291925]]))
+: #+END_EXAMPLE
+#+BEGIN_SRC ipython
+crosstab_myocardial_unittype
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[146]:
+,#+BEGIN_EXAMPLE
+  outcome         0     1
+  unittype
+  CCU-CTICU     107  1518
+  CSICU          45   372
+  CTICU          25   300
+  Cardiac ICU   107  1089
+  MICU           51   325
+  Med-Surg ICU  343  3105
+  Neuro ICU      19    88
+  SICU           21   213
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+
+stats.chi2_contingency(crosstab_myocardial_unittype)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[145]:
+,#+BEGIN_EXAMPLE
+  (35.4287241351293,
+  9.289034339846925e-06,
+  7,
+  array([[ 150.97696687, 1474.02303313],
+  [  38.74301242,  378.25698758],
+  [  30.19539337,  294.80460663],
+  [ 111.11904762, 1084.88095238],
+  [  34.93374741,  341.06625259],
+  [ 320.34989648, 3127.65010352],
+  [   9.94125259,   97.05874741],
+  [  21.74068323,  212.25931677]]))
+,#+END_EXAMPLE
+#+end_example
+
+**** logistic regression
+
+***** prepare
+ #+BEGIN_SRC ipython
+ import statsmodels.api as sm
+ import pylab as pl
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[173]:
+ #+BEGIN_SRC ipython
+ X_newna_myocardial = X_newna
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[204]:
+ #+BEGIN_SRC ipython
+   # X_newna_myocardial.info()
+   X_newna_myocardial.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[206]:
+
+ #+BEGIN_SRC ipython
+ X_newna_myocardial_train = X_newna_myocardial[['age', 'bicarbonate', 'glucose', 'WBC x 1000', 'creatinine', 'albumin', 'FiO2%', 'AST (SGOT)', 'calcium', 'ALT (SGPT)', 'Female', 'total cholesterol']]
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[207]:
+ #+BEGIN_SRC ipython
+ X_newna_myocardial_train['intercept'] = 1.0
+
+ #+END_SRC
+#+BEGIN_SRC ipython
+X_newna_myocardial_train.info()
+
+#+END_SRC
+ #+RESULTS:
+ : # Out[210]:
+ #+BEGIN_SRC ipython
+ y_myocardial = y
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[209]:
+
+***** fit the logisticregression
+ #+BEGIN_SRC ipython
+ logit_myocardial = sm.Logit(y_myocardial, X_newna_myocardial_train)  
+ result_myocardial = logit_myocardial.fit()
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[199]:
+
+***** summary
+ #+BEGIN_SRC ipython
+ result_myocardial.summary()
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[200]:
+ ,#+BEGIN_EXAMPLE
+   <class 'statsmodels.iolib.summary.Summary'>
+   """
+   Logit Regression Results
+   ==============================================================================
+   Dep. Variable:                outcome   No. Observations:                 8674
+   Model:                          Logit   Df Residuals:                     8661
+   Method:                           MLE   Df Model:                           12
+   Date:                Tue, 27 Nov 2018   Pseudo R-squ.:                  0.2532
+   Time:                        22:52:19   Log-Likelihood:                -2696.2
+   converged:                       True   LL-Null:                       -3610.4
+   LLR p-value:                     0.000
+   =====================================================================================
+   coef    std err          z      P>|z|      [0.025      0.975]
+   -------------------------------------------------------------------------------------
+   age                  -0.0202      0.003     -7.595      0.000      -0.025      -0.015
+   bicarbonate           0.1217      0.013      9.188      0.000       0.096       0.148
+   glucose              -0.0088      0.001    -11.970      0.000      -0.010      -0.007
+   WBC x 1000           -0.1341      0.009    -15.143      0.000      -0.151      -0.117
+   chloride              0.0315      0.012      2.527      0.011       0.007       0.056
+   platelets x 1000      0.0048      0.001      9.204      0.000       0.004       0.006
+   FiO2%                -0.0236      0.002    -10.132      0.000      -0.028      -0.019
+   AST (SGOT)           -0.0011      0.000     -4.611      0.000      -0.002      -0.001
+   eos                   0.2401      0.032      7.424      0.000       0.177       0.303
+   potassium            -0.0730      0.093     -0.785      0.432      -0.255       0.109
+   sodium               -0.1432      0.014     -9.949      0.000      -0.171      -0.115
+   total cholesterol     0.0009      0.001      0.886      0.376      -0.001       0.003
+   intercept            19.6818      1.308     15.047      0.000      17.118      22.246
+   =====================================================================================
+   """
+ ,#+END_EXAMPLE
+ #+end_example
+
+**** logisticregression
+#+BEGIN_SRC ipython
+X_newna.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[172]:
+
+#+BEGIN_SRC ipython
+
+
+#+END_SRC
+*** stroke
+
+**** read in table    
+ #+BEGIN_SRC ipython
+
+ stroke = pd.read_csv('/Users/liw17/Documents/EHR/patient_lab_intakeoutput_physicalexam_stroke_outcome_final_11_24.csv')
+
+ #+END_SRC
+
+**** contigency table
+ #+BEGIN_SRC ipython
+
+
+ crosstab_stroke_ethnicity = pd.crosstab(stroke['ethnicity'], stroke['outcome'])
+ crosstab_stroke_gender = pd.crosstab(stroke['gender'], stroke['outcome'])
+ crosstab_stroke_unittype = pd.crosstab(stroke['unittype'], stroke['outcome'])
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[149]:
+ #+BEGIN_SRC ipython
+crosstab_stroke_gender
+ 
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[151]:
+ : #+BEGIN_EXAMPLE
+ :   outcome    0     1
+ :   gender
+ :   Female   616  3582
+ :   Male     653  3822
+ :   Unknown    0     1
+ : #+END_EXAMPLE
+
+#+BEGIN_SRC ipython
+
+
+stats.chi2_contingency(crosstab_stroke_gender)
+#+END_SRC
+
+#+RESULTS:
+: # Out[150]:
+: #+BEGIN_EXAMPLE
+:   (0.18290298387483667,
+:   0.9126055838071051,
+:   2,
+:   array([[6.14164399e+02, 3.58383560e+03],
+:   [6.54689301e+02, 3.82031070e+03],
+:   [1.46299285e-01, 8.53700715e-01]]))
+: #+END_EXAMPLE
+#+BEGIN_SRC ipython
+crosstab_stroke_unittype
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[154]:
+,#+BEGIN_EXAMPLE
+  outcome         0     1
+  unittype
+  CCU-CTICU      41   221
+  CSICU          11    24
+  CTICU          15   115
+  Cardiac ICU    71   333
+  MICU           90   459
+  Med-Surg ICU  531  3144
+  Neuro ICU     403  2650
+  SICU          107   459
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+
+stats.chi2_contingency(crosstab_stroke_unittype)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[155]:
+,#+BEGIN_EXAMPLE
+  (26.666193151623435,
+  0.00038266383797766284,
+  7,
+  array([[  38.33041273,  223.66958727],
+  [   5.12047498,   29.87952502],
+  [  19.01890708,  110.98109292],
+  [  59.10491123,  344.89508877],
+  [  80.31830759,  468.68169241],
+  [ 537.64987318, 3137.35012682],
+  [ 446.65171778, 2606.34828222],
+  [  82.80539543,  483.19460457]]))
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+crosstab_stroke_ethnicity
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[153]:
+,#+BEGIN_EXAMPLE
+  outcome             0     1
+  ethnicity
+  African American  137   916
+  Asian              24   145
+  Caucasian         956  5565
+  Hispanic           62   331
+  Native American     3    36
+  Other/Unknown      75   373
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+
+stats.chi2_contingency(crosstab_stroke_ethnicity)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[152]:
+,#+BEGIN_EXAMPLE
+  (5.7539446459758485,
+  0.3309021379578488,
+  5,
+  array([[ 153.4988983 ,  899.5011017 ],
+  [  24.63562565,  144.36437435],
+  [ 950.58529514, 5570.41470486],
+  [  57.28876261,  335.71123739],
+  [   5.68514438,   33.31485562],
+  [  65.30627392,  382.69372608]]))
+,#+END_EXAMPLE
+#+end_example
+
+**** logistic regression
+
+***** prepare
+ #+BEGIN_SRC ipython
+ import statsmodels.api as sm
+ import pylab as pl
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[173]:
+ #+BEGIN_SRC ipython
+ X_newna_stroke = X_newna
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[189]:
+ #+BEGIN_SRC ipython
+ X_newna_stroke.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[192]:
+
+ #+BEGIN_SRC ipython
+ X_newna_stroke_train = X_newna_stroke[['age', 'bicarbonate', 'glucose', 'WBC x 1000', 'chloride', 'platelets x 1000', 'FiO2%', 'AST (SGOT)', 'eos', 'potassium', 'sodium', 'total cholesterol']]
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[193]:
+ #+BEGIN_SRC ipython
+ X_newna_stroke_train['intercept'] = 1.0
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[194]:
+ #+BEGIN_SRC ipython
+ y_stroke = y
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[195]:
+
+***** fit the logisticregression
+ #+BEGIN_SRC ipython
+ logit_stroke = sm.Logit(y_stroke, X_newna_stroke_train)  
+ result_stroke = logit_stroke.fit()
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[199]:
+
+***** summary
+ #+BEGIN_SRC ipython
+ result_stroke.summary()
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[200]:
+ ,#+BEGIN_EXAMPLE
+   <class 'statsmodels.iolib.summary.Summary'>
+   """
+   Logit Regression Results
+   ==============================================================================
+   Dep. Variable:                outcome   No. Observations:                 8674
+   Model:                          Logit   Df Residuals:                     8661
+   Method:                           MLE   Df Model:                           12
+   Date:                Tue, 27 Nov 2018   Pseudo R-squ.:                  0.2532
+   Time:                        22:52:19   Log-Likelihood:                -2696.2
+   converged:                       True   LL-Null:                       -3610.4
+   LLR p-value:                     0.000
+   =====================================================================================
+   coef    std err          z      P>|z|      [0.025      0.975]
+   -------------------------------------------------------------------------------------
+   age                  -0.0202      0.003     -7.595      0.000      -0.025      -0.015
+   bicarbonate           0.1217      0.013      9.188      0.000       0.096       0.148
+   glucose              -0.0088      0.001    -11.970      0.000      -0.010      -0.007
+   WBC x 1000           -0.1341      0.009    -15.143      0.000      -0.151      -0.117
+   chloride              0.0315      0.012      2.527      0.011       0.007       0.056
+   platelets x 1000      0.0048      0.001      9.204      0.000       0.004       0.006
+   FiO2%                -0.0236      0.002    -10.132      0.000      -0.028      -0.019
+   AST (SGOT)           -0.0011      0.000     -4.611      0.000      -0.002      -0.001
+   eos                   0.2401      0.032      7.424      0.000       0.177       0.303
+   potassium            -0.0730      0.093     -0.785      0.432      -0.255       0.109
+   sodium               -0.1432      0.014     -9.949      0.000      -0.171      -0.115
+   total cholesterol     0.0009      0.001      0.886      0.376      -0.001       0.003
+   intercept            19.6818      1.308     15.047      0.000      17.118      22.246
+   =====================================================================================
+   """
+ ,#+END_EXAMPLE
+ #+end_example
+
+*** heart failure
+
+**** read in table
+ #+BEGIN_SRC 
+heart_failure = pd.read_csv('/Users/liw17/Documents/EHR/patient_lab__intakeoutput_physicalexam_heart_outcome_final_11_23.csv')
+ #+END_SRC
+#+BEGIN_SRC ipython
+heart_failure.info()
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[168]:
+
+**** contigency table
+#+BEGIN_SRC ipython
+crosstab_heart_failure_ethnicity = pd.crosstab(heart_failure['ethnicity'], heart_failure['outcome'])
+crosstab_heart_failure_gender = pd.crosstab(heart_failure['gender'], heart_failure['outcome'])
+crosstab_heart_failure_unittype = pd.crosstab(heart_failure['unittype'], heart_failure['outcome'])
+
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[156]:
+#+BEGIN_SRC ipython
+crosstab_heart_failure_gender
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[159]:
+: #+BEGIN_EXAMPLE
+:   outcome    0     1
+:   gender
+:   Female   654  4339
+:   Male     763  4848
+: #+END_EXAMPLE
+
+#+BEGIN_SRC ipython
+
+stats.chi2_contingency(crosstab_heart_failure_gender)
+
+#+END_SRC
+
+#+RESULTS:
+: # Out[160]:
+: #+BEGIN_EXAMPLE
+:   (0.5280385848059382,
+:   0.4674326483741057,
+:   1,
+:   array([[ 667.20869483, 4325.79130517],
+:   [ 749.79130517, 4861.20869483]]))
+: #+END_EXAMPLE
+#+BEGIN_SRC ipython
+crosstab_heart_failure_ethnicity
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[162]:
+,#+BEGIN_EXAMPLE
+  outcome              0     1
+  ethnicity
+  African American   137  1289
+  Asian               19   130
+  Caucasian         1123  6842
+  Hispanic            74   451
+  Native American      3    26
+  Other/Unknown       48   356
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+
+stats.chi2_contingency(crosstab_heart_failure_ethnicity)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[163]:
+,#+BEGIN_EXAMPLE
+  (22.3714921495034,
+  0.00044494172183538174,
+  5,
+  array([[1.90712898e+02, 1.23528710e+03],
+  [1.99272242e+01, 1.29072776e+02],
+  [1.06523719e+03, 6.89976281e+03],
+  [7.02133740e+01, 4.54786626e+02],
+  [3.87845304e+00, 2.51215470e+01],
+  [5.40308630e+01, 3.49969137e+02]]))
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+crosstab_heart_failure_unittype
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[166]:
+,#+BEGIN_EXAMPLE
+  outcome         0     1
+  unittype
+  CCU-CTICU     165  1002
+  CSICU          23   215
+  CTICU          40   358
+  Cardiac ICU   173  1001
+  MICU          136   795
+  Med-Surg ICU  800  5241
+  Neuro ICU      31   181
+  SICU           49   396
+,#+END_EXAMPLE
+#+end_example
+
+#+BEGIN_SRC ipython
+
+stats.chi2_contingency(crosstab_heart_failure_unittype)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+# Out[167]:
+,#+BEGIN_EXAMPLE
+  (12.844106947287806,
+  0.07599902953042348,
+  7,
+  array([[ 155.91542523, 1011.08457477],
+  [  31.7976617 ,  206.2023383 ],
+  [  53.174241  ,  344.825759  ],
+  [ 156.85065058, 1017.14934942],
+  [ 124.38497077,  806.61502923],
+  [ 807.099472  , 5233.900528  ],
+  [  28.32396757,  183.67603243],
+  [  59.45361116,  385.54638884]]))
+,#+END_EXAMPLE
+#+end_example
+
+**** logistic regression
+
+***** prepare
+ #+BEGIN_SRC ipython
+ import statsmodels.api as sm
+ import pylab as pl
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[173]:
+ #+BEGIN_SRC ipython
+ X_newna_heart_failure = X_newna
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[174]:
+ #+BEGIN_SRC ipython
+ X_newna_heart_failure.info()
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[177]:
+
+ #+BEGIN_SRC ipython
+ X_newna_heart_failure_train = X_newna_heart_failure[['age', 'lactate', 'WBC x 1000', 'bicarbonate', 'BUN', 'FiO2', 'AST (SGOT)', 'pH', 'lymphs', 'sodium', 'albumin', 'African American', 'Asian', 'Caucasian', 'Hispanic', 'Native American']]
+
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[178]:
+ #+BEGIN_SRC ipython
+ X_newna_heart_failure_train['intercept'] = 1.0
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[179]:
+ #+BEGIN_SRC ipython
+ y_heart_failure = y
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[181]:
+
+***** fit the logisticregression
+ #+BEGIN_SRC ipython
+ logit_heart_failure = sm.Logit(y_heart_failure, X_newna_heart_failure_train)  
+ result_heart_failure = logit.fit()
+
+
+ #+END_SRC
+
+ #+RESULTS:
+ : # Out[184]:
+
+***** summary
+ #+BEGIN_SRC ipython
+ result.summary()
+
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+ # Out[185]:
+ ,#+BEGIN_EXAMPLE
+   <class 'statsmodels.iolib.summary.Summary'>
+   """
+   Logit Regression Results
+   ==============================================================================
+   Dep. Variable:                outcome   No. Observations:                10606
+   Model:                          Logit   Df Residuals:                    10589
+   Method:                           MLE   Df Model:                           16
+   Date:                Tue, 27 Nov 2018   Pseudo R-squ.:                  0.1912
+   Time:                        22:27:53   Log-Likelihood:                -3372.8
+   converged:                       True   LL-Null:                       -4170.1
+   LLR p-value:                     0.000
+   ====================================================================================
+   coef    std err          z      P>|z|      [0.025      0.975]
+   ------------------------------------------------------------------------------------
+   age                 -0.0250      0.003     -9.153      0.000      -0.030      -0.020
+   lactate             -0.3075      0.024    -13.035      0.000      -0.354      -0.261
+   WBC x 1000          -0.0513      0.005    -11.255      0.000      -0.060      -0.042
+   bicarbonate          0.0356      0.007      5.038      0.000       0.022       0.049
+   BUN                 -0.0126      0.001     -8.921      0.000      -0.015      -0.010
+   FiO2                -0.0001      0.000     -0.969      0.332      -0.000       0.000
+   AST (SGOT)          -0.0005   9.21e-05     -5.110      0.000      -0.001      -0.000
+   pH                   4.0364      0.467      8.646      0.000       3.121       4.951
+   lymphs               0.0406      0.005      8.777      0.000       0.032       0.050
+   sodium              -0.0239      0.007     -3.445      0.001      -0.038      -0.010
+   albumin              0.8032      0.062     12.896      0.000       0.681       0.925
+   African American     0.1634      0.184      0.890      0.373      -0.197       0.523
+   Asian               -0.0762      0.309     -0.247      0.805      -0.682       0.530
+   Caucasian           -0.0606      0.156     -0.390      0.697      -0.366       0.245
+   Hispanic            -0.0358      0.207     -0.173      0.863      -0.442       0.370
+   Native American      0.0271      0.662      0.041      0.967      -1.271       1.325
+   intercept          -24.5804      3.587     -6.852      0.000     -31.611     -17.549
+   ====================================================================================
+   """
+ ,#+END_EXAMPLE
+ #+end_example
